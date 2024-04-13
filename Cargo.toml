@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+  "bridge"
+]
+
+[workspace.dependencies]
+packed_struct = "0.10"
+cobs = "0.2.3"
+thiserror = "1.0"
+crc = "3.0"
