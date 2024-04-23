@@ -2,10 +2,22 @@
 resolver = "2"
 members = [
   "bridge"
-]
+, "sender", "visualizer", "gl"]
 
 [workspace.dependencies]
+gl = { path = "./gl" }
+anyhow = "1"
 packed_struct = "0.10"
 cobs = "0.2.3"
 thiserror = "1.0"
 crc = "3.0"
+realsense-rust = "1.2.3"
+tokio = { version = "1.37.0", features = ["full"] }
+
+gstreamer = "0.22"
+gstreamer-app = "0.22"
+gstreamer-video = "0.22"
+gstreamer-gl = "0.22"
+gstreamer-gl-x11 = "0.22"
+gstreamer-gl-egl = "0.22"
+godot = { git = "https://github.com/godot-rust/gdext", branch = "master" }

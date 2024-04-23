@@ -1,0 +1,7 @@
+[package]
+name = "gl"
+edition = "2021"
+build = "build.rs"
+
+[build-dependencies]
+gl_generator = "0.14"

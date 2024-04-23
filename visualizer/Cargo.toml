@@ -1,0 +1,39 @@
+[package]
+name = "visualizer"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.70"
+license = "LGPL"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+godot.workspace = true
+gstreamer.workspace = true
+gstreamer-video.workspace = true
+gstreamer-gl.workspace = true
+gstreamer-app.workspace = true
+tokio.workspace = true
+gl.workspace = true
+realsense-rust.workspace = true
+glib = "*"
+anyhow = "1.0"
+derive_more = "*"
+async-trait = "0.1"
+once_cell = "*"
+nix = "0.27"
+
+[target.'cfg(target_os="android")'.dependencies]
+gstreamer-gl-egl = { workspace = true  }
+khronos-egl = { version = "6", features = ["static", "no-pkg-config"] }
+ndk-sys = "0.5"
+
+[target.'cfg(not(target_os="android"))'.dependencies]
+gstreamer-gl-egl = { workspace = true }
+khronos-egl = { version = "6", features = ["static"] }
+
+[target.'cfg(target_os="linux")'.dependencies]
+glx = { version = "0.2" }
+gstreamer-gl-x11 = { workspace = true }
