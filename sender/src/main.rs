@@ -45,7 +45,6 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
     (r, g, b)
 }
 
-
 fn colorize_depth(depth: u16) -> (u8, u8, u8) {
     if !(DEPTH_MIN..DEPTH_MAX).contains(&depth) {
         return (0, 0, 0);
@@ -87,13 +86,10 @@ impl Rs2AppSrc {
                 Rs2Format::Rgb8,
                 FRAMERATE as _,
             )?;
-        let video_info = gst_video::VideoInfo::builder(
-            gst_video::VideoFormat::Rgb,
-            WIDTH,
-            HEIGHT * 2,
-        )
-        .fps(gst::Fraction::new(FRAMERATE as _, 1))
-        .build()?;
+        let video_info =
+            gst_video::VideoInfo::builder(gst_video::VideoFormat::Rgb, WIDTH, HEIGHT * 2)
+                .fps(gst::Fraction::new(FRAMERATE as _, 1))
+                .build()?;
         let mut pipeline = pipeline.start(Some(config))?;
 
         for profile in pipeline.profile().streams() {
@@ -143,8 +139,12 @@ impl Rs2AppSrc {
                                     };
                                     plane_data[..color_frame_data.len()]
                                         .copy_from_slice(color_frame_data);
-                                    for (dst, raw_depth) in plane_data[color_frame_data.len()..].chunks_exact_mut(3).zip(depth_frame_data.chunks_exact(2)) {
-                                        let depth = (raw_depth[0] as u16) | ((raw_depth[1] as u16) << 8);
+                                    for (dst, raw_depth) in plane_data[color_frame_data.len()..]
+                                        .chunks_exact_mut(3)
+                                        .zip(depth_frame_data.chunks_exact(2))
+                                    {
+                                        let depth =
+                                            (raw_depth[0] as u16) | ((raw_depth[1] as u16) << 8);
                                         let rgb = colorize_depth(depth);
                                         dst[0] = rgb.0;
                                         dst[1] = rgb.1;

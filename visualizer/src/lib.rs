@@ -11,9 +11,9 @@ use gstreamer_gl_egl as gst_gl_egl;
 #[cfg(target_os = "linux")]
 use gstreamer_gl_x11 as gst_gl_x11;
 
-mod texture_copy;
 mod decoder;
 mod gd_visualizer;
+mod texture_copy;
 mod visualizer;
 
 static TOKIO_RUNTIME: Lazy<tokio::runtime::Runtime> =

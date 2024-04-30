@@ -3,11 +3,11 @@ use std::{collections::HashSet, time::Duration};
 
 use anyhow::Result;
 use gst::prelude::*;
+use gst_gl::prelude::*;
 use gstreamer as gst;
 use gstreamer_app as gst_app;
-use gstreamer_video as gst_video;
 use gstreamer_gl as gst_gl;
-use gst_gl::prelude::*;
+use gstreamer_video as gst_video;
 use realsense_rust as rs;
 use rs::{
     frame::{ColorFrame, DepthFrame},
@@ -30,7 +30,10 @@ impl Visualizer {
             .property("port", 5000)
             .build()?;
         let capsfilter = gst::ElementFactory::make("capsfilter")
-            .property("caps", gst::Caps::from_str("application/x-rtp,media=video,encoding-name=H264")?)
+            .property(
+                "caps",
+                gst::Caps::from_str("application/x-rtp,media=video,encoding-name=H264")?,
+            )
             .build()?;
         let rtph264depay = gst::ElementFactory::make("rtph264depay").build()?;
         let h264parse = gst::ElementFactory::make("h264parse").build()?;
