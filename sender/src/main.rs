@@ -2,31 +2,58 @@ use std::str::FromStr;
 use std::{collections::HashSet, time::Duration};
 
 use anyhow::{Context as _, Result};
-// use realsense_rust::{
-//     config::Config,
-//     context::Context,
-//     frame::{ColorFrame, DepthFrame},
-//     kind::{Rs2CameraInfo, Rs2Format, Rs2ProductLine, Rs2StreamKind},
-//     pipeline::InactivePipeline,
-// };
-use gst::glib;
 use gst::prelude::*;
-use gst_video::prelude::*;
 use gstreamer as gst;
 use gstreamer_app as gst_app;
 use gstreamer_video as gst_video;
 use realsense_rust as rs;
-use rs::frame::FrameEx;
 use rs::{
     frame::{ColorFrame, DepthFrame},
     kind::{Rs2CameraInfo, Rs2Format, Rs2ProductLine, Rs2StreamKind},
-    pipeline::{ActivePipeline, InactivePipeline},
+    pipeline::InactivePipeline,
 };
-use tokio::task::JoinHandle;
 
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
 const FRAMERATE: u32 = 60;
+
+const DEPTH_MIN: u16 = 280;
+const DEPTH_MAX: u16 = 6000;
+
+fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+    let i = (h * 6.0).floor() as i32;
+    let f = h * 6.0 - i as f32;
+    let p = v * (1.0 - s);
+    let q = v * (1.0 - f * s);
+    let t = v * (1.0 - (1.0 - f) * s);
+
+    let (r, g, b) = match i % 6 {
+        0 => (v, t, p),
+        1 => (q, v, p),
+        2 => (p, v, t),
+        3 => (p, q, v),
+        4 => (t, p, v),
+        5 => (v, p, q),
+        _ => unreachable!(),
+    };
+
+    // RGB値を8ビット整数に変換します。
+    let r = (r * 255.0).round() as u8;
+    let g = (g * 255.0).round() as u8;
+    let b = (b * 255.0).round() as u8;
+
+    (r, g, b)
+}
+
+
+fn colorize_depth(depth: u16) -> (u8, u8, u8) {
+    if !(DEPTH_MIN..DEPTH_MAX).contains(&depth) {
+        return (0, 0, 0);
+    }
+    let normalized_depth = ((depth - DEPTH_MIN) as f32) / (DEPTH_MAX - DEPTH_MIN) as f32;
+    // println!("{normalized_depth:}");
+    hsv_to_rgb(normalized_depth, 1.0, 1.0)
+}
 
 struct Rs2AppSrc {
     app_src: gst_app::AppSrc,
@@ -38,10 +65,11 @@ impl Rs2AppSrc {
         queried_device.insert(Rs2ProductLine::D400);
         let context = rs::context::Context::new()?;
         let devices = context.query_devices(queried_device);
+        let device = devices.iter().next().context("No realsense camera found")?;
         let pipeline = InactivePipeline::try_from(&context)?;
         let mut config = rs::config::Config::new();
         config
-            .enable_device_from_serial(devices[0].info(Rs2CameraInfo::SerialNumber).unwrap())?
+            .enable_device_from_serial(device.info(Rs2CameraInfo::SerialNumber).unwrap())?
             .disable_all_streams()?
             .enable_stream(
                 Rs2StreamKind::Depth,
@@ -59,11 +87,22 @@ impl Rs2AppSrc {
                 Rs2Format::Rgb8,
                 FRAMERATE as _,
             )?;
-        let packed_depth_height = (HEIGHT as f64 / 1.5).ceil() as u32;
-        let video_info = gst_video::VideoInfo::builder(gst_video::VideoFormat::Rgb, WIDTH, HEIGHT + packed_depth_height)
-            .fps(gst::Fraction::new(FRAMERATE as _, 1))
-            .build()?;
+        let video_info = gst_video::VideoInfo::builder(
+            gst_video::VideoFormat::Rgb,
+            WIDTH,
+            HEIGHT * 2,
+        )
+        .fps(gst::Fraction::new(FRAMERATE as _, 1))
+        .build()?;
         let mut pipeline = pipeline.start(Some(config))?;
+
+        for profile in pipeline.profile().streams() {
+            println!(
+                "{:?} stream intrinsics: {:?}",
+                profile.kind(),
+                profile.intrinsics()?
+            );
+        }
 
         let app_src = gst_app::AppSrc::builder()
             .caps(&video_info.to_caps()?)
@@ -102,8 +141,15 @@ impl Rs2AppSrc {
                                             depth_frame.get_data_size(),
                                         )
                                     };
-                                    plane_data[..color_frame_data.len()].copy_from_slice(color_frame_data);
-                                    plane_data[color_frame_data.len()..][..depth_frame_data.len()].copy_from_slice(depth_frame_data);
+                                    plane_data[..color_frame_data.len()]
+                                        .copy_from_slice(color_frame_data);
+                                    for (dst, raw_depth) in plane_data[color_frame_data.len()..].chunks_exact_mut(3).zip(depth_frame_data.chunks_exact(2)) {
+                                        let depth = (raw_depth[0] as u16) | ((raw_depth[1] as u16) << 8);
+                                        let rgb = colorize_depth(depth);
+                                        dst[0] = rgb.0;
+                                        dst[1] = rgb.1;
+                                        dst[2] = rgb.2;
+                                    }
                                 }
                                 app_src.push_buffer(buffer).unwrap();
                             }
@@ -114,6 +160,8 @@ impl Rs2AppSrc {
                     })
                     .build(),
             )
+            .do_timestamp(true)
+            .format(gst::Format::Time)
             .build();
 
         Ok(Self { app_src })
@@ -131,19 +179,48 @@ async fn main() -> Result<()> {
     gst::log::set_default_threshold(gst::DebugLevel::Info);
 
     let src: Rs2AppSrc = Rs2AppSrc::new()?;
-    let videoconvert1 = gst::ElementFactory::make("videoconvert").build()?;
-    let capsfilter = gst::ElementFactory::make("capsfilter").property("caps", gst::Caps::from_str("video/x-raw,format=RGBx").unwrap()).build()?;
-    let vapostproc = gst::ElementFactory::make("vapostproc").build()?;
-    let vah264enc = gst::ElementFactory::make("vah264enc").build()?;
-    let queue = gst::ElementFactory::make("queue").build()?;
-    let vah264dec = gst::ElementFactory::make("vah264dec").build()?;
-    let videoconvert2 = gst::ElementFactory::make("videoconvert").build()?;
-    let autovideosink = gst::ElementFactory::make("autovideosink")
-        .property("sync", false)
+    let videoconvert = gst::ElementFactory::make("videoconvert").build()?;
+    let capsfilter = gst::ElementFactory::make("capsfilter")
+        .property(
+            "caps",
+            gst::Caps::from_str("video/x-raw,format=RGBx").unwrap(),
+        )
         .build()?;
+    let vapostproc = gst::ElementFactory::make("vapostproc").build()?;
+    let vah264enc = gst::ElementFactory::make("vah264enc")
+        .property("bitrate", 10_000u32)
+        .build()?;
+    let rtph264pay = gst::ElementFactory::make("rtph264pay").build()?;
+    let udpsink = gst::ElementFactory::make("udpsink")
+        .property("sync", false)
+        .property("host", "127.0.0.1")
+        .property("port", 5000)
+        .build()?;
+    // let queue = gst::ElementFactory::make("queue").build()?;
+    // let vah264dec = gst::ElementFactory::make("vah264dec").build()?;
+    // let videoconvert2 = gst::ElementFactory::make("videoconvert").build()?;
+    // let autovideosink = gst::ElementFactory::make("autovideosink")
+    //     .property("sync", false)
+    //     .build()?;
     let pipeline = gst::Pipeline::default();
-    pipeline.add_many([&src.element(), &videoconvert1, &capsfilter, &vapostproc, &vah264enc, &queue, &vah264dec, &videoconvert2, &autovideosink])?;
-    gst::Element::link_many([&src.element(), &videoconvert1, &capsfilter, &vapostproc, &vah264enc, &queue, &vah264dec, &videoconvert2, &autovideosink])?;
+    pipeline.add_many([
+        &src.element(),
+        &videoconvert,
+        &capsfilter,
+        &vapostproc,
+        &vah264enc,
+        &rtph264pay,
+        &udpsink,
+    ])?;
+    gst::Element::link_many([
+        &src.element(),
+        &videoconvert,
+        &capsfilter,
+        &vapostproc,
+        &vah264enc,
+        &rtph264pay,
+        &udpsink,
+    ])?;
 
     let bus = pipeline.bus().unwrap();
     pipeline.set_state(gst::State::Playing)?;

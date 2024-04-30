@@ -1,13 +1,45 @@
-[gd_scene load_steps=3 format=3 uid="uid://dv2safc6d01bf"]
+[gd_scene load_steps=7 format=3 uid="uid://dv2safc6d01bf"]
 
-[ext_resource type="Texture2D" uid="uid://dw1ev31e1k6ps" path="res://icon.svg" id="1_7pgwo"]
 [ext_resource type="Script" path="res://scripts/test.gd" id="1_10r5p"]
+[ext_resource type="Script" path="res://scripts/rgbd_display.gd" id="5_06v35"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_yu8mw"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_f71r1"]
+sky_material = SubResource("ProceduralSkyMaterial_yu8mw")
+
+[sub_resource type="Environment" id="Environment_l6u86"]
+background_mode = 2
+sky = SubResource("Sky_f71r1")
+tonemap_mode = 2
+
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_3pcrg"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_10r5p")
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_l6u86")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
 [node name="Camera3D" type="Camera3D" parent="."]
 
-[node name="Sprite3D" type="Sprite3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12.1277)
-texture = ExtResource("1_7pgwo")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, -5.37314e-16, 8.74228e-08, 0, -1, 7.10543e-15, 8.74228e-08, 0, -1, 0, 0, -1)
+extra_cull_margin = 10.0
+mesh = SubResource("ImmediateMesh_3pcrg")
+script = ExtResource("5_06v35")
+color_f = Vector2(611.77, 612.052)
+color_pp = Vector2(323.714, 250.61)
+depth_f = Vector2(381.207, 381.207)
+depth_pp = Vector2(320.944, 239.521)
+depth_min = 280
+depth_max = 6000
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.55599, -0.650664)
