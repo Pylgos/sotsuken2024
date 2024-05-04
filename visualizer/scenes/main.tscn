@@ -15,7 +15,7 @@ background_mode = 2
 sky = SubResource("Sky_f71r1")
 tonemap_mode = 2
 
-[sub_resource type="ImmediateMesh" id="ImmediateMesh_iyrgu"]
+[sub_resource type="ImmediateMesh" id="ImmediateMesh_l63ui"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_10r5p")
@@ -37,9 +37,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.55599, -0.650664)
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/XRCamera3D"]
-transform = Transform3D(1, -5.37314e-16, 8.74228e-08, 0, -1, 7.10543e-15, 8.74228e-08, 0, -1, 0, 0, -1)
+transform = Transform3D(1, -5.37314e-16, 8.74228e-08, 0, -1, 7.10543e-15, 8.74228e-08, 0, -1, 0, 0, 0)
 extra_cull_margin = 10.0
-mesh = SubResource("ImmediateMesh_iyrgu")
+mesh = SubResource("ImmediateMesh_l63ui")
 skeleton = NodePath("../../..")
 script = ExtResource("5_06v35")
 color_f = Vector2(611.77, 612.052)
