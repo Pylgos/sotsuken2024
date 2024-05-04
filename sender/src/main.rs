@@ -196,12 +196,6 @@ async fn main() -> Result<()> {
         .property("host", "127.0.0.1")
         .property("port", 5000)
         .build()?;
-    // let queue = gst::ElementFactory::make("queue").build()?;
-    // let vah264dec = gst::ElementFactory::make("vah264dec").build()?;
-    // let videoconvert2 = gst::ElementFactory::make("videoconvert").build()?;
-    // let autovideosink = gst::ElementFactory::make("autovideosink")
-    //     .property("sync", false)
-    //     .build()?;
     let pipeline = gst::Pipeline::default();
     pipeline.add_many([
         &src.element(),

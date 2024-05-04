@@ -1,112 +1,14 @@
-use std::os::raw::c_void;
-
-use anyhow::{bail, Context as _, Result};
 use godot::prelude::*;
-use gst_gl::prelude::*;
-use gstreamer::prelude::*;
-use gstreamer_gl as gst_gl;
 use once_cell::sync::Lazy;
-
-use gstreamer_gl_egl as gst_gl_egl;
-#[cfg(target_os = "linux")]
-use gstreamer_gl_x11 as gst_gl_x11;
 
 mod decoder;
 mod gd_visualizer;
-mod texture_copy;
 mod visualizer;
 
 static TOKIO_RUNTIME: Lazy<tokio::runtime::Runtime> =
     Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 
 struct VisualizerExtensionLibrary;
-
-pub(crate) struct GlInfo {
-    pub(crate) context: gst_gl::GLContext,
-    pub(crate) display: gst_gl::GLDisplay,
-}
-
-fn try_init_egl() -> Result<GlInfo> {
-    use gst_gl::GLAPI;
-    unsafe {
-        let egl = khronos_egl::Instance::new(khronos_egl::Static);
-        let context = egl
-            .get_current_context()
-            .context("failed to get current egl context")?;
-        println!("got egl context {:?}", context);
-        let display = egl
-            .get_current_display()
-            .context("failed to get current egl display")?;
-
-        let gst_display = gst_gl_egl::GLDisplayEGL::with_egl_display(display.as_ptr() as usize)?
-            .upcast::<gst_gl::GLDisplay>();
-        let gst_context = gst_gl::GLContext::new_wrapped(
-            &gst_display,
-            context.as_ptr() as usize,
-            gst_gl::GLPlatform::EGL,
-            GLAPI::GLES2,
-        );
-        Ok(GlInfo {
-            context: gst_context.unwrap(),
-            display: gst_display,
-        })
-    }
-}
-
-#[cfg(target_os = "linux")]
-fn try_init_glx() -> Result<GlInfo> {
-    use gst_gl::GLAPI;
-    unsafe {
-        let context = glx::GetCurrentContext();
-        if context.is_null() {
-            bail!("failed to get glx context")
-        }
-
-        let display = glx::GetCurrentDisplay();
-        if display.is_null() {
-            bail!("failed to get glx display")
-        }
-
-        let gst_display =
-            gst_gl_x11::GLDisplayX11::with_display(display as usize)?.upcast::<gst_gl::GLDisplay>();
-        let gst_context = gst_gl::GLContext::new_wrapped(
-            &gst_display,
-            context as usize,
-            gst_gl::GLPlatform::GLX,
-            GLAPI::OPENGL | GLAPI::OPENGL3,
-        );
-        Ok(GlInfo {
-            context: gst_context.unwrap(),
-            display: gst_display.upcast(),
-        })
-    }
-}
-
-fn init_gl() -> GlInfo {
-    if let Ok(info) = try_init_egl() {
-        return info;
-    }
-    #[cfg(target_os = "linux")]
-    if let Ok(info) = try_init_glx() {
-        return info;
-    }
-    panic!("failed to init gl")
-}
-
-pub(crate) static GODOT_GL_INFO: Lazy<GlInfo> = Lazy::new(|| {
-    let info = init_gl();
-    let ctx = info.context.clone();
-    gl::load_with(|symbol| {
-        let addr = ctx.proc_address(symbol) as *const c_void;
-        if addr.is_null() {
-            println!("failed to load: {symbol}")
-        }
-        addr
-    });
-    info.context.activate(true).unwrap();
-    info.context.fill_info().unwrap();
-    info
-});
 
 #[gdextension]
 unsafe impl ExtensionLibrary for VisualizerExtensionLibrary {
@@ -119,9 +21,6 @@ unsafe impl ExtensionLibrary for VisualizerExtensionLibrary {
                 setup_logging();
                 gstreamer::init().unwrap();
                 let _ = *TOKIO_RUNTIME;
-            }
-            InitLevel::Scene => {
-                let _ = *GODOT_GL_INFO;
             }
             _ => {}
         }

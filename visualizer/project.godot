@@ -25,5 +25,10 @@ enabled=PackedStringArray("res://addons/debug_camera/plugin.cfg")
 
 [rendering]
 
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+
+[xr]
+
+openxr/enabled=true
+openxr/view_configuration=1
+shaders/enabled=true

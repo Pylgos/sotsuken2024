@@ -13,7 +13,6 @@ crate-type = ["cdylib"]
 godot.workspace = true
 gstreamer.workspace = true
 gstreamer-video.workspace = true
-gstreamer-gl.workspace = true
 gstreamer-app.workspace = true
 tokio.workspace = true
 gl.workspace = true
