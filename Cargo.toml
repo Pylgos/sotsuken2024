@@ -1,8 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-  "bridge"
-, "sender", "visualizer", "gl"]
+  "bridge",
+  "depth_sender",
+  "depth_visualizer",
+  "gl",
+]
 
 [workspace.dependencies]
 gl = { path = "./gl" }

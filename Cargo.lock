@@ -160,6 +160,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19d374276b40fb8bbdee95aef7c7fa6b5316ec764510eb64b8dd0e2ed0d7e7f5"
 
 [[package]]
+name = "depth_sender"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "gstreamer",
+ "gstreamer-app",
+ "gstreamer-video",
+ "realsense-rust",
+ "tokio",
+]
+
+[[package]]
+name = "depth_visualizer"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "derive_more",
+ "gl",
+ "glib",
+ "glx",
+ "godot",
+ "gstreamer",
+ "gstreamer-app",
+ "gstreamer-gl-egl",
+ "gstreamer-gl-x11",
+ "gstreamer-video",
+ "khronos-egl",
+ "ndk-sys",
+ "nix",
+ "once_cell",
+ "realsense-rust",
+ "tokio",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1101,18 +1137,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92d43fe69e652f3df9bdc2b85b2854a0825b86e4fb76bc44d945137d053639ca"
 
 [[package]]
-name = "sender"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "gstreamer",
- "gstreamer-app",
- "gstreamer-video",
- "realsense-rust",
- "tokio",
-]
-
-[[package]]
 name = "serde"
 version = "1.0.197"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1347,30 +1371,6 @@ name = "version-compare"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "852e951cb7832cb45cb1169900d19760cfa39b82bc0ea9c0e5a14ae88411c98b"
-
-[[package]]
-name = "visualizer"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "derive_more",
- "gl",
- "glib",
- "glx",
- "godot",
- "gstreamer",
- "gstreamer-app",
- "gstreamer-gl-egl",
- "gstreamer-gl-x11",
- "gstreamer-video",
- "khronos-egl",
- "ndk-sys",
- "nix",
- "once_cell",
- "realsense-rust",
- "tokio",
-]
 
 [[package]]
 name = "wasi"
