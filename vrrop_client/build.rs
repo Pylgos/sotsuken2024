@@ -4,7 +4,7 @@ use std::path::PathBuf;
 fn main() {
     let dst = cmake::build("cpp");
     println!("cargo:rustc-link-search=native={}", dst.display());
-    println!("cargo:rustc-link-lib=static=slam_core");
+    println!("cargo:rustc-link-lib=dylib=slam_core");
 
     let bindings = bindgen::Builder::default()
         // The input header we would like to generate

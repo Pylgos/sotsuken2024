@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "librealsense2/hpp/rs_frame.hpp"
 #include "librealsense2/hpp/rs_sensor.hpp"
 #include <opencv2/imgproc/types_c.h>
-#include <optional>
 #include <rtabmap/core/util2d.h>
 #include <rtabmap/utilite/UConversion.h>
 #include <rtabmap/utilite/UStl.h>
@@ -538,7 +537,7 @@ bool CameraRs2D4xx::init(const std::string &calibrationFolder,
           video_profile.fps() == colorFps_) {
         auto intrinsic = video_profile.get_intrinsics();
         profilesPerSensor[i].push_back(profile);
-        ir_depth_model_ =
+        rgb_model_ =
             CameraModel(camera_name, intrinsic.fx, intrinsic.fy, intrinsic.ppx,
                         intrinsic.ppy, this->getLocalTransform(), 0,
                         cv::Size(intrinsic.width, intrinsic.height));
@@ -793,9 +792,9 @@ SensorData CameraRs2D4xx::captureImage(SensorCaptureInfo *info) {
                               (void *)depth_frame.get_data())
                           .clone();
       cv::Mat ir = cv::Mat(irBuffer_.size(), irBuffer_.type(),
-                           (void *)ir_frame.get_data());
+                           (void *)ir_frame.get_data()).clone();
       cv::Mat color = cv::Mat(rgbBuffer_.size(), rgbBuffer_.type(),
-                            (void *)color_frame.get_data());
+                            (void *)color_frame.get_data()).clone();
       data = SensorData(ir, depth, ir_depth_model_, this->getNextSeqID(),
                         stamp, color);
 

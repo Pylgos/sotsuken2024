@@ -71,6 +71,8 @@ public:
   void setGlobalTimeSync(bool enabled);
 
   void setJsonConfig(const std::string &json);
+  rtabmap::CameraModel getIrDepthModel() { return ir_depth_model_; };
+  rtabmap::CameraModel getRgbModel() { return rgb_model_; };
 
 private:
   void close();
@@ -95,6 +97,7 @@ private:
   cv::Mat irBuffer_;
   cv::Mat rgbBuffer_;
   rtabmap::CameraModel ir_depth_model_;
+  rtabmap::CameraModel rgb_model_;
   rtabmap::Transform imuLocalTransform_;
   std::map<double, cv::Vec3f> accBuffer_;
   std::map<double, cv::Vec3f> gyroBuffer_;
