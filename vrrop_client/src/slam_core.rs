@@ -5,7 +5,6 @@ use image::{ImageBuffer, Luma, Primitive, Rgb};
 use nalgebra::{Quaternion, UnitQuaternion, Vector3};
 use vrrop_common::CameraIntrinsics;
 
-// #[derive(Debug)]
 pub struct SlamCore<'a> {
     inner: *mut slam_core_t,
     callback: Option<FfiCallback<'a>>,

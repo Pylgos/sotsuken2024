@@ -12,74 +12,6 @@ mod client;
 mod slam_core;
 mod slam_core_sys;
 
-// fn encode_color(img: &ColorImage) -> Result<Vec<u8>> {
-//     tokio::task::block_in_place(|| {
-//         let mut dst = Vec::new();
-//         let mut enc = JpegEncoder::new_with_quality(&mut dst, 50);
-//         enc.encode_image(img)?;
-//         Ok(dst)
-//     })
-// }
-
-// fn encode_depth(img: &DepthImage) -> Result<Vec<u8>> {
-//     let mut dst = Vec::new();
-//     let enc = PngEncoder::new(&mut dst);
-//     enc.write_image(
-//         &img.as_bytes()[..image_size(img)],
-//         img.width(),
-//         img.height(),
-//         ExtendedColorType::L16,
-//     )?;
-//     Ok(dst)
-// }
-
-// fn image_size<V: image::GenericImageView>(img: &V) -> usize {
-//     let channels = <V::Pixel as image::Pixel>::CHANNEL_COUNT as usize;
-//     let subpixel_size = std::mem::size_of::<<V::Pixel as image::Pixel>::Subpixel>();
-//     img.width() as usize * img.height() as usize * subpixel_size * channels
-// }
-
-// async fn process_odometry_event(ev: slam_core::OdometryEvent) -> Result<()> {
-//     let color_image_size = image_size(&ev.color_image);
-//     let depth_image_size = image_size(&ev.depth_image);
-//     let color_img = ev.color_image;
-//     let depth_img = ev.depth_image;
-//     let (encoded_color_res, encoded_depth_res) = tokio::join!(
-//         tokio::task::spawn_blocking(move || encode_color(&color_img).unwrap()),
-//         tokio::task::spawn_blocking(move || encode_depth(&depth_img).unwrap())
-//     );
-//     let encoded_color = encoded_color_res?;
-//     let encoded_depth = encoded_depth_res?;
-
-//     println!("translation: {:?}", ev.translation);
-//     println!("rotation   : {:?}", ev.rotation.euler_angles());
-//     println!(
-//         "encoded color: {:3.0}% {:}",
-//         (encoded_color.len() as f32 / color_image_size as f32) * 100.0,
-//         encoded_color.len(),
-//     );
-//     println!(
-//         "encoded depth: {:3.0}% {:}",
-//         (encoded_depth.len() as f32 / depth_image_size as f32) * 100.0,
-//         encoded_depth.len(),
-//     );
-
-//     Ok(())
-// }
-
-// #[tokio::main]
-// async fn main() {
-//     let mut core = SlamCore::new();
-//     let tokio_rt = tokio::runtime::Handle::current();
-//     core.register_odometry_event_handler(move |ev| {
-//         let _enter = tokio_rt.enter();
-//         tokio::spawn(async move {
-//             process_odometry_event(ev).await.unwrap();
-//         });
-//     });
-//     tokio::time::sleep(Duration::from_secs(10)).await;
-// }
-
 #[tokio::main]
 async fn main() -> Result<()> {
     let image_interval = Duration::from_secs(1);
@@ -124,3 +56,4 @@ async fn main() -> Result<()> {
     println!("Exiting...");
     Ok(())
 }
+
