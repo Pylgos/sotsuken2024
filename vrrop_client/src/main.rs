@@ -111,9 +111,9 @@ async fn main() -> Result<()> {
         match image_sender.try_send(ImagesMessage {
             stamp,
             color: ev.color_image,
-            color_intrinsics: color_intrinsics,
+            color_intrinsics,
             depth: ev.depth_image,
-            depth_intrinsics: depth_intrinsics,
+            depth_intrinsics,
         }) {
             Ok(_) => {}
             Err(_) => eprintln!("image message dropped!"),

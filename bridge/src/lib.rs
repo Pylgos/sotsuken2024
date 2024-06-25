@@ -43,14 +43,14 @@ impl<Reader: Read, Writer: Write> Bridge<Reader, Writer> {
         if BUF_SIZE < data.len() + 2 {
             return Err(Error::BufferOverflow);
         }
-        let crc = CRC.checksum(&data);
+        let crc = CRC.checksum(data);
         to_encode[..data.len()].copy_from_slice(data);
         to_encode[data.len()] = (crc & 0xff) as u8;
         to_encode[data.len() + 1] = (crc >> 8) as u8;
         let encoded_len = cobs::try_encode(&to_encode[..data.len() + 2], &mut encoded_data)
             .map_err(|_| Error::BufferOverflow)?;
         self.writer.write_all(&encoded_data[..encoded_len])?;
-        self.writer.write(&[0])?;
+        self.writer.write_all(&[0])?;
         Ok(())
     }
 

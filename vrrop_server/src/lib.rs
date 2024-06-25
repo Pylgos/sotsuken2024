@@ -5,9 +5,7 @@ use nalgebra::{Quaternion, UnitQuaternion, Vector3, Vector4};
 use std::sync::Arc;
 use tokio::{
     net::{TcpListener, UdpSocket},
-    sync::{
-        broadcast,
-    },
+    sync::broadcast,
     task::JoinHandle,
 };
 

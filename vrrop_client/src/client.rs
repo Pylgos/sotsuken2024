@@ -146,7 +146,7 @@ fn encode_odometry_message(msg: &OdometryMessage) -> vrrop_common::OdometryMessa
     vrrop_common::OdometryMessage {
         stamp: msg.stamp,
         translation: msg.translation.into(),
-        rotation: msg.rotation.into_inner().as_vector().clone().into(),
+        rotation: (*msg.rotation.into_inner().as_vector()).into(),
     }
 }
 

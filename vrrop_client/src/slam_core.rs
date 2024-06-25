@@ -1,4 +1,4 @@
-use std::{mem::MaybeUninit, ops::Deref, ptr::NonNull};
+use std::{ffi::c_void, mem::MaybeUninit, ops::Deref, ptr::NonNull};
 
 use crate::slam_core_sys::*;
 use image::{ImageBuffer, Luma, Primitive, Rgb};
@@ -44,9 +44,7 @@ impl<T: Primitive> From<NonNull<slam_core_image_t>> for ImageData<T> {
     fn from(image: NonNull<slam_core_image_t>) -> Self {
         unsafe {
             Self {
-                // width: slam_core_image_get_width(image.as_ptr()),
-                // height: slam_core_image_get_height(image.as_ptr()),
-                data: NonNull::new(std::mem::transmute(slam_core_image_get_data(
+                data: NonNull::new(std::mem::transmute::<*mut c_void, *mut T>(slam_core_image_get_data(
                     image.as_ptr(),
                 )))
                 .unwrap(),
@@ -78,7 +76,7 @@ unsafe extern "C" fn odometry_event_handler(
     raw_ev: *const slam_core_odometry_event_t,
 ) {
     let raw_ev = raw_ev.as_ref().unwrap();
-    let cb: &FfiCallback = unsafe { std::mem::transmute(userdata) };
+    let cb = &*(userdata as *const FfiCallback<'_>);
     let rust_ev: OdometryEvent = OdometryEvent {
         translation: Vector3::new(
             raw_ev.translation[0],
