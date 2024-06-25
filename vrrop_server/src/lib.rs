@@ -2,6 +2,7 @@ use anyhow::Result;
 use futures::{StreamExt, TryStreamExt};
 use image::{ImageBuffer, Luma, Rgb};
 use nalgebra::{Quaternion, UnitQuaternion, Vector3, Vector4};
+use vrrop_common::CameraIntrinsics;
 use std::sync::Arc;
 use tokio::{
     net::{TcpListener, UdpSocket},
@@ -23,7 +24,9 @@ pub struct OdometryMessage {
 pub struct ImagesMessage {
     pub stamp: std::time::SystemTime,
     pub color: ImageBuffer<Rgb<u8>, Vec<u8>>,
+    pub color_intrinsics: CameraIntrinsics,
     pub depth: ImageBuffer<Luma<u16>, Vec<u16>>,
+    pub depth_intrinsics: CameraIntrinsics,
 }
 
 pub struct Callbacks {
@@ -56,7 +59,9 @@ async fn decode_images_message(compressed: vrrop_common::ImagesMessage) -> Resul
     Ok(ImagesMessage {
         stamp: compressed.stamp,
         color: color.await??.to_rgb8(),
+        color_intrinsics: compressed.color_intrinsics,
         depth: depth.await??.to_luma16(),
+        depth_intrinsics: compressed.depth_intrinsics,
     })
 }
 

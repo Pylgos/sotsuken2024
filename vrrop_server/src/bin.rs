@@ -12,6 +12,8 @@ async fn main() -> Result<()> {
             println!("images received");
             println!("color image size: {}", images.color.len());
             println!("depth image size: {}", images.depth.len());
+            println!("color intrinsics: {:?}", images.color_intrinsics);
+            println!("depth intrinsics: {:?}", images.depth_intrinsics);
         },
     ))
     .await?;
