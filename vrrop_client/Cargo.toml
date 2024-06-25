@@ -7,8 +7,15 @@ build = "build.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-image = "0.25.1"
-nalgebra = "0.32.6"
+vrrop_common.workspace = true
+anyhow.workspace = true
+bincode.workspace = true
+futures.workspace = true
+tokio.workspace = true
+tokio-tungstenite.workspace = true
+tokio-util.workspace = true
+image.workspace = true
+nalgebra.workspace = true
 
 [build-dependencies]
 cmake = "0.1"

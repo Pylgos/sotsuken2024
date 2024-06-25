@@ -1,13 +1,16 @@
-use std::{ops::Deref, ptr::NonNull};
+use std::{mem::MaybeUninit, ops::Deref, ptr::NonNull};
 
 use crate::slam_core_sys::*;
 use image::{ImageBuffer, Luma, Primitive, Rgb};
 use nalgebra::{Quaternion, UnitQuaternion, Vector3};
+use vrrop_common::CameraIntrinsics;
 
 // #[derive(Debug)]
 pub struct SlamCore<'a> {
     inner: *mut slam_core_t,
     callback: Option<FfiCallback<'a>>,
+    color_intrinsics: CameraIntrinsics,
+    depth_intrinsics: CameraIntrinsics,
 }
 
 pub type ColorImage = ImageBuffer<Rgb<u8>, ImageData<u8>>;
@@ -111,9 +114,14 @@ unsafe extern "C" fn odometry_event_handler(
 impl<'a> SlamCore<'a> {
     pub fn new() -> Self {
         let inner = unsafe { slam_core_create() };
+        let mut color_intrinsics = MaybeUninit::uninit();
+        let mut depth_intrinsics = MaybeUninit::uninit();
+        unsafe { slam_core_get_intrinstics(inner, color_intrinsics.as_mut_ptr(), depth_intrinsics.as_mut_ptr()) }
         Self {
             inner,
             callback: None,
+            color_intrinsics: convert_intrinsics(unsafe { &color_intrinsics.assume_init() }),
+            depth_intrinsics: convert_intrinsics(unsafe { &depth_intrinsics.assume_init() }),
         }
     }
 
@@ -127,10 +135,30 @@ impl<'a> SlamCore<'a> {
             )
         };
     }
+
+    pub fn color_intrinsics(&self) -> &CameraIntrinsics {
+        &self.color_intrinsics
+    }
+
+    pub fn depth_intrinsics(&self) -> &CameraIntrinsics {
+        &self.depth_intrinsics
+    }
 }
+
 
 impl<'a> Drop for SlamCore<'a> {
     fn drop(&mut self) {
         unsafe { slam_core_delete(self.inner) };
+    }
+}
+
+fn convert_intrinsics(intrinsics: &slam_core_camera_intrinsics_t) -> CameraIntrinsics {
+    CameraIntrinsics {
+        width: intrinsics.width,
+        height: intrinsics.height,
+        fx: intrinsics.fx,
+        fy: intrinsics.fy,
+        cx: intrinsics.cx,
+        cy: intrinsics.cy,
     }
 }

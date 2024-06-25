@@ -125,14 +125,6 @@ private:
         ev.rotation[1] = q.x();
         ev.rotation[2] = q.y();
         ev.rotation[3] = q.z();
-        // float x, y, z;
-        // pose.getTranslation(x, y, z);
-        // std::cout << std::format("x: {:7.3f} y: {:7.3f} z: {:7.3f} color:
-        // {}", x, y, z, odom_event->data().userDataRaw().data != nullptr) <<
-        // std::endl; std::cout << odom_event->data().userDataRaw() <<
-        // std::endl; cv::imencode(const String &ext, InputArray img,
-        // std::vector<uchar> std::cout << odom_event->data().imageRaw() !=
-        // nullptr << std::endl;
       }
       ev.color = new slam_core_image_t{odom_event->data().userDataRaw()};
       ev.depth = new slam_core_image_t{odom_event->data().depthRaw()};

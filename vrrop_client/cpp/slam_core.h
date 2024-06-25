@@ -16,8 +16,8 @@ typedef struct slam_core_camera_intrinsics {
   double fy;
   double cx;
   double cy;
-  size_t width;
-  size_t height;
+  uint32_t width;
+  uint32_t height;
 } slam_core_camera_intrinsics_t;
 
 typedef struct slam_core_odometry_event {

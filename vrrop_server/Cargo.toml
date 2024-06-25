@@ -1,0 +1,25 @@
+[package]
+name = "vrrop_server"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "vrrop_server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "vrrop_server"
+path = "src/bin.rs"
+
+
+[dependencies]
+vrrop_common.workspace = true
+
+anyhow.workspace = true
+bincode.workspace = true
+futures.workspace = true
+image.workspace = true
+nalgebra.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tokio-tungstenite.workspace = true
