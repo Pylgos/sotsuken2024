@@ -22,8 +22,3 @@ DebugCam="*res://addons/debug_camera/scripts/DebugCamAutoload.gd"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/debug_camera/plugin.cfg")
-
-[rendering]
-
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"

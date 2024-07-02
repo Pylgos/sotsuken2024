@@ -1,12 +1,7 @@
 use anyhow::Result;
 use client::{Client, ImagesMessage, OdometryMessage};
 use slam_core::SlamCore;
-use std::{
-    net::SocketAddr,
-    str::FromStr,
-    sync::Arc,
-    time::Duration,
-};
+use std::{net::SocketAddr, str::FromStr, sync::Arc, time::Duration};
 
 mod client;
 mod slam_core;
@@ -14,7 +9,7 @@ mod slam_core_sys;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let image_interval = Duration::from_millis(1000);
+    let image_interval = Duration::from_millis(100);
 
     let client = Client::new(SocketAddr::from_str("127.0.0.1:6677")?).await?;
     let mut slam_core = SlamCore::new();
@@ -25,6 +20,10 @@ async fn main() -> Result<()> {
     let depth_intrinsics = *slam_core.depth_intrinsics();
     slam_core.register_odometry_event_handler(move |ev| {
         let stamp = std::time::SystemTime::now();
+        let pose_is_finite = ev.translation.iter().all(|x| x.is_finite()) && ev.rotation.as_vector().iter().all(|x| x.is_finite());
+        if !pose_is_finite {
+            return;
+        }
         let odometry = OdometryMessage {
             stamp,
             translation: ev.translation,
@@ -32,7 +31,9 @@ async fn main() -> Result<()> {
         };
         match odometry_sender.try_send(odometry) {
             Ok(_) => {}
-            Err(_) => eprintln!("odometry message dropped!"),
+            Err(_) => {
+                // eprintln!("odometry message dropped!");
+            }
         }
         {
             let mut guard = last_image_send.lock().unwrap();
@@ -49,12 +50,12 @@ async fn main() -> Result<()> {
             depth_intrinsics,
         }) {
             Ok(_) => {}
-            Err(_) => eprintln!("image message dropped!"),
-        
+            Err(_) => {
+                // eprintln!("image message dropped!");
+            }
         };
     });
     tokio::signal::ctrl_c().await?;
     println!("Exiting...");
     Ok(())
 }
-

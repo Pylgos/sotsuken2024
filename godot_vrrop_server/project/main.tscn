@@ -18,10 +18,6 @@ sky = SubResource("Sky_h0j5w")
 [node name="Main" type="Node3D"]
 script = ExtResource("1_oofns")
 
-[node name="DebugCamera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.89994)
-script = ExtResource("2_ea4aw")
-
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 0, 0, 0)
 
@@ -29,6 +25,12 @@ transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 
 transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
 
 [node name="CameraMarker" type="Node3D" parent="Visualizer"]
+
+[node name="Node3D" type="Node3D" parent="Visualizer/CameraMarker"]
+transform = Transform3D(-4.37114e-08, -4.37114e-08, -1, -1, -1.31362e-14, 4.37114e-08, -1.63902e-14, 1, -4.37114e-08, 0, 0, 0)
+
+[node name="DebugCamera3D" type="Camera3D" parent="Visualizer/CameraMarker/Node3D"]
+script = ExtResource("2_ea4aw")
 
 [node name="Mesh" type="MeshInstance3D" parent="Visualizer/CameraMarker"]
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 8.05961e-16, -9.28477e-15, 0, 1, 0, 0, 0)

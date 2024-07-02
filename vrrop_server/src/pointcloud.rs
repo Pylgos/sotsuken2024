@@ -1,86 +1,101 @@
 use nalgebra::{Point3, Vector2, Vector3};
+use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use vrrop_common::CameraIntrinsics;
 
 use crate::{ImagesMessage, OdometryMessage};
 
+#[derive(Debug, Clone, Copy)]
+pub struct Point {
+    pub position: Point3<f32>,
+    pub color: Vector3<u8>,
+    pub age: u8,
+    pub size: f32,
+}
+
 pub struct PointCloud {
-    pub points: Vec<Point3<f32>>,
-    pub colors: Vec<Vector3<u8>>,
-    pub sizes: Vec<f32>,
+    pub points: Vec<Point>,
 }
 
 impl PointCloud {
     pub fn new() -> Self {
-        Self {
-            points: Vec::new(),
-            colors: Vec::new(),
-            sizes: Vec::new(),
-        }
+        Self { points: Vec::new() }
     }
 
-    pub fn push(&mut self, point: Point3<f32>, color: Vector3<u8>, size: f32) {
-        self.points.push(point);
-        self.colors.push(color);
-        self.sizes.push(size);
-    }
+    pub fn merge_images_msg(&self, image_msg: &ImagesMessage) -> PointCloud {
+        let maximum_point_count = 1000000;
+        let max_age = 255;
 
-    pub fn clear(&mut self) {
-        self.points.clear();
-        self.colors.clear();
-    }
-
-    pub fn merge_images_msg(&mut self, image_msg: &ImagesMessage) {
         let extrinsics = odometry_to_extrinsics(image_msg.odometry);
         let color_projector = Projector::new(image_msg.color_intrinsics, extrinsics);
         let depth_projector = Projector::new(image_msg.depth_intrinsics, extrinsics);
 
-        let mut i = 0;
-        let mut removed_points = 0;
-        loop {
-            if i >= self.points.len() {
-                break;
-            }
-            match (
-                color_projector.point_to_pixel(self.points[i]),
-                depth_projector.point_to_pixel(self.points[i]),
-            ) {
-                (Some(_), Some(depth_pixel)) => {
-                    let orig_depth = depth_projector.point_depth(self.points[i]);
-                    let depth = image_msg.depth.get_pixel(depth_pixel.x, depth_pixel.y)[0] as f32
-                        * image_msg.depth_unit;
-                    if orig_depth < depth + 0.1 {
-                        self.points.swap_remove(i);
-                        self.colors.swap_remove(i);
-                        self.sizes.swap_remove(i);
-                        removed_points += 1;
-                        continue;
+        let filtered_points_iter = self
+            .points
+            .par_iter()
+            .filter(|point| {
+                match (
+                    color_projector.point_to_pixel(point.position),
+                    depth_projector.point_to_pixel(point.position),
+                ) {
+                    (Some(_), Some(depth_pixel)) => {
+                        let orig_depth = depth_projector.point_depth(point.position);
+                        let depth = image_msg.depth.get_pixel(depth_pixel.x, depth_pixel.y)[0]
+                            as f32
+                            * image_msg.depth_unit;
+                        // if orig_depth < depth + 0.5 {
+                        if depth != 0.0 {
+                            false
+                        } else {
+                            true
+                        }
                     }
+                    _ => true,
                 }
-                _ => {}
-            }
-            i += 1;
-        }
+            }).filter_map(|point| {
+                let new_age = point.age.saturating_add(1);
+                if new_age >= max_age {
+                    None
+                } else {
+                    Some(Point { age: new_age, ..*point })
+                }
+            });
 
-        println!("points removed: {}", removed_points);
-
-        let mut added_points = 0;
-        for y in 0..image_msg.depth.height() {
-            for x in 0..image_msg.depth.width() {
+        let additional_points_iter = (0..image_msg.depth.height())
+            .into_par_iter()
+            .flat_map(|y| {
+                (0..image_msg.depth.width())
+                    .into_par_iter()
+                    .map(move |x| (x, y))
+            })
+            .filter_map(|(x, y)| {
                 let depth_pixel = Vector2::new(x, y);
                 let depth = image_msg.depth.get_pixel(x, y)[0] as f32 * image_msg.depth_unit;
-                if depth == 0.0 {
-                    continue;
+                if depth == 0.0 || depth > 5.0 {
+                    return None;
                 }
                 let point = depth_projector.pixel_to_point(depth_pixel, depth);
                 if let Some(color_pixel) = color_projector.point_to_pixel(point) {
                     let color = image_msg.color.get_pixel(color_pixel.x, color_pixel.y).0;
                     let size = color_projector.point_size(depth);
-                    self.push(point, Vector3::new(color[0], color[1], color[2]), size);
-                    added_points += 1;
+                    Some(Point {
+                        age: 0,
+                        position: point,
+                        color: Vector3::new(color[0], color[1], color[2]),
+                        size,
+                    })
+                } else {
+                    None
                 }
-            }
-        }
-        println!("number of points: {}  Δ: {}", self.points.len(), added_points - removed_points);
+            });
+
+        let mut new_points: Vec<_> = filtered_points_iter.chain(additional_points_iter).collect();
+        // if new_points.len() > maximum_point_count {
+        //     new_points.resize_with(maximum_point_count, || unreachable!());
+        // }
+
+        println!("number of points: {}  delta: {}", new_points.len(), new_points.len() as i64 - self.points.len() as i64);
+
+        PointCloud { points: new_points }
     }
 }
 
@@ -111,6 +126,9 @@ impl Projector {
 
     fn point_to_pixel(&self, point: Point3<f32>) -> Option<Vector2<u32>> {
         let point = self.inv_extrinsics * point;
+        if point.x < 0.0 {
+            return None;
+        }
         let x = (self.intrinsics.fx * -point.y / point.x + self.intrinsics.cx) as i64;
         let y = (self.intrinsics.fy * -point.z / point.x + self.intrinsics.cy) as i64;
         if 0 <= x && x < self.intrinsics.width as i64 && 0 <= y && y < self.intrinsics.height as i64

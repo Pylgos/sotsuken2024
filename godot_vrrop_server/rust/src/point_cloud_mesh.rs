@@ -17,14 +17,23 @@ impl PointCloudMesh {
     fn set_pointcloud(&mut self, cloud: Gd<PointCloud>) {
         let mut base = self.base_mut();
         base.clear_surfaces();
-        base.call("surface_begin".into(), &[PrimitiveType::POINTS.to_variant()]);
+        base.call(
+            "surface_begin".into(),
+            &[PrimitiveType::POINTS.to_variant()],
+        );
         let cloud = &cloud.bind().inner;
-        for ((point, color), size) in cloud.points.iter().zip(cloud.colors.iter()).zip(cloud.sizes.iter()) {
+        for point in cloud.points.iter() {
+            let color = point.color;
+            let position = point.position;
+            let size = point.size;
             let mut vertex_color = Color::from_rgba8(color.x, color.y, color.z, 0);
-            vertex_color.a = *size * 100.0;
-            // println!("point: {:?}, color: {:?}, size: {}", point, color, size);
+            vertex_color.a = size * 100.0;
             base.surface_set_color(vertex_color);
-            base.surface_add_vertex(Vector3::new(point.x as real, point.y as real, point.z as real));
+            base.surface_add_vertex(Vector3::new(
+                position.x as real,
+                position.y as real,
+                position.z as real,
+            ));
         }
         base.surface_end();
     }
@@ -36,4 +45,3 @@ impl IImmediateMesh for PointCloudMesh {
         Self { base }
     }
 }
-

@@ -1888,6 +1888,7 @@ dependencies = [
  "futures",
  "image",
  "nalgebra",
+ "rayon",
  "serde",
  "tokio",
  "tokio-tungstenite",

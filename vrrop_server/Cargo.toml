@@ -23,3 +23,4 @@ nalgebra.workspace = true
 serde.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true
+rayon = "1.10.0"

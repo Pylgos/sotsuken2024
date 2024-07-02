@@ -1,9 +1,10 @@
 use std::borrow::{Borrow, BorrowMut};
 
-use godot::classes::RefCounted;
 use godot::engine::WeakRef;
 use godot::global::weakref;
 use godot::prelude::*;
+use godot::{classes::RefCounted, engine::Image};
+use image::EncodableLayout;
 
 use crate::{SharedGd, TOKIO_RUNTIME};
 
@@ -68,6 +69,37 @@ pub struct ImagesMessage {
     pub inner: vrrop_server::ImagesMessage,
 }
 
+#[godot_api]
+impl ImagesMessage {
+    #[func]
+    fn convert_depth(&self) -> Gd<Image> {
+        let depth = &self.inner.depth;
+        let depth_data: &[u8] = depth.as_bytes();
+        Image::create_from_data(
+            depth.width() as _,
+            depth.height() as _,
+            false,
+            godot::classes::image::Format::LA8,
+            PackedByteArray::from(depth_data),
+        )
+        .unwrap()
+    }
+
+    #[func]
+    fn convert_color(&self) -> Gd<Image> {
+        let color = &self.inner.color;
+        let color_data: &[u8] = color.as_bytes();
+        Image::create_from_data(
+            color.width() as _,
+            color.height() as _,
+            false,
+            godot::classes::image::Format::RGB8,
+            PackedByteArray::from(color_data),
+        )
+        .unwrap()
+    }
+}
+
 impl ImagesMessage {
     fn new_gd(inner: vrrop_server::ImagesMessage) -> Gd<Self> {
         Gd::from_init_fn(|base| Self { base, inner })
@@ -85,7 +117,11 @@ pub struct OdometryMessage {
 impl OdometryMessage {
     #[func]
     fn translation(&self) -> Vector3 {
-        Vector3::new(self.inner.translation.x, self.inner.translation.y, self.inner.translation.z)
+        Vector3::new(
+            self.inner.translation.x,
+            self.inner.translation.y,
+            self.inner.translation.z,
+        )
     }
 
     #[func]
@@ -101,7 +137,6 @@ impl OdometryMessage {
     }
 }
 
-
 #[derive(GodotClass)]
 #[class(base=RefCounted)]
 pub struct PointCloud {
@@ -112,14 +147,20 @@ pub struct PointCloud {
 #[godot_api]
 impl PointCloud {
     #[func]
-    fn merge_images_msg(&mut self, image_msg: Gd<ImagesMessage>) {
-        self.inner.merge_images_msg(&image_msg.bind().inner)
+    fn merge_images_msg(&self, image_msg: Gd<ImagesMessage>) -> Gd<PointCloud> {
+        Gd::from_init_fn(move |base| PointCloud {
+            base,
+            inner: self.inner.merge_images_msg(&image_msg.bind().inner),
+        })
     }
 }
 
 #[godot_api]
 impl IRefCounted for PointCloud {
     fn init(base: Base<RefCounted>) -> Self {
-        Self { base, inner: vrrop_server::PointCloud::new() }
+        Self {
+            base,
+            inner: vrrop_server::PointCloud::new(),
+        }
     }
 }
