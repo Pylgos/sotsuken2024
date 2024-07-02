@@ -56,9 +56,9 @@ CameraRs2D4xx::CameraRs2D4xx(const std::string &device, float imageRate,
     : Camera(imageRate, localTransform), deviceId_(device),
       depth_scale_meters_(1.0f), lastImuStamp_(0.0),
       clockSyncWarningShown_(false), imuGlobalSyncWarningShown_(false),
-      colorWidth_(640), colorHeight_(480), colorFps_(30),
-      irDepthWidth_(640), irDepthHeight_(480),
-      irDepthFps_(30), globalTimeSync_(true), closing_(false) {
+      colorWidth_(640), colorHeight_(480), colorFps_(30), irDepthWidth_(640),
+      irDepthHeight_(480), irDepthFps_(30), globalTimeSync_(true),
+      closing_(false) {
   UDEBUG("");
 }
 
@@ -618,10 +618,10 @@ bool CameraRs2D4xx::init(const std::string &calibrationFolder,
   }
   rgbBuffer_ = cv::Mat(cv::Size(colorWidth_, colorHeight_), CV_8UC3,
                        cv::Scalar(0, 0, 0));
-  irBuffer_ = cv::Mat(cv::Size(irDepthWidth_, irDepthHeight_),
-                      CV_8UC1, cv::Scalar(0));
-  depthBuffer_ = cv::Mat(cv::Size(irDepthWidth_, irDepthHeight_),
-                         CV_16UC1, cv::Scalar(0));
+  irBuffer_ =
+      cv::Mat(cv::Size(irDepthWidth_, irDepthHeight_), CV_8UC1, cv::Scalar(0));
+  depthBuffer_ =
+      cv::Mat(cv::Size(irDepthWidth_, irDepthHeight_), CV_16UC1, cv::Scalar(0));
   UDEBUG("");
   if (!ir_depth_model_.isValidForProjection()) {
     UERROR("Calibration info not valid!");
@@ -761,11 +761,15 @@ SensorData CameraRs2D4xx::captureImage(SensorCaptureInfo *info) {
     bool required_frames_arrived = false;
     do {
       frameset = syncer_.wait_for_frames(100);
-      color_frame = color_frame.get() == nullptr ? frameset.get_color_frame() : color_frame;
-      ir_frame = ir_frame.get() == nullptr ? frameset.get_infrared_frame() : ir_frame;
-      depth_frame = depth_frame.get() == nullptr ? frameset.get_depth_frame() : depth_frame;
-      required_frames_arrived =
-          ir_frame.get() != nullptr && depth_frame.get() != nullptr && color_frame.get() != nullptr;
+      color_frame = color_frame.get() == nullptr ? frameset.get_color_frame()
+                                                 : color_frame;
+      ir_frame =
+          ir_frame.get() == nullptr ? frameset.get_infrared_frame() : ir_frame;
+      depth_frame = depth_frame.get() == nullptr ? frameset.get_depth_frame()
+                                                 : depth_frame;
+      required_frames_arrived = ir_frame.get() != nullptr &&
+                                depth_frame.get() != nullptr &&
+                                color_frame.get() != nullptr;
     } while (!required_frames_arrived && timer.elapsed() < 2.0);
 
     if (required_frames_arrived) {
@@ -792,11 +796,13 @@ SensorData CameraRs2D4xx::captureImage(SensorCaptureInfo *info) {
                               (void *)depth_frame.get_data())
                           .clone();
       cv::Mat ir = cv::Mat(irBuffer_.size(), irBuffer_.type(),
-                           (void *)ir_frame.get_data()).clone();
+                           (void *)ir_frame.get_data())
+                       .clone();
       cv::Mat color = cv::Mat(rgbBuffer_.size(), rgbBuffer_.type(),
-                            (void *)color_frame.get_data()).clone();
-      data = SensorData(ir, depth, ir_depth_model_, this->getNextSeqID(),
-                        stamp, color);
+                              (void *)color_frame.get_data())
+                          .clone();
+      data = SensorData(ir, depth, ir_depth_model_, this->getNextSeqID(), stamp,
+                        color);
 
       IMU imu;
       unsigned int confidence = 0;
