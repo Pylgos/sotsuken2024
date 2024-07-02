@@ -1,4 +1,5 @@
 use anyhow::Result;
+use clap::Parser;
 use client::{Client, ImagesMessage, OdometryMessage};
 use slam_core::SlamCore;
 use std::{net::SocketAddr, str::FromStr, sync::Arc, time::Duration};
@@ -7,12 +8,21 @@ mod client;
 mod slam_core;
 mod slam_core_sys;
 
+#[derive(clap::Parser)]
+struct Args {
+    #[clap(long, default_value = "127.0.0.1:6677")]
+    host: String,
+    #[clap(long, default_value = "1000")]
+    image_interval: u64,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    let image_interval = Duration::from_millis(1000);
+    let args = Args::parse();
 
-    let client = Client::new(SocketAddr::from_str("127.0.0.1:6677")?).await?;
-    // let client = Client::new(SocketAddr::from_str("10.133.6.231:6677")?).await?;
+    let image_interval = Duration::from_millis(args.image_interval);
+
+    let client = Client::new(SocketAddr::from_str(&args.host)?).await?;
 
     let mut slam_core = SlamCore::new();
     let image_sender = client.image_sender();
@@ -22,7 +32,8 @@ async fn main() -> Result<()> {
     let depth_intrinsics = *slam_core.depth_intrinsics();
     slam_core.register_odometry_event_handler(move |ev| {
         let stamp = std::time::SystemTime::now();
-        let pose_is_finite = ev.translation.iter().all(|x| x.is_finite()) && ev.rotation.as_vector().iter().all(|x| x.is_finite());
+        let pose_is_finite = ev.translation.iter().all(|x| x.is_finite())
+            && ev.rotation.as_vector().iter().all(|x| x.is_finite());
         if !pose_is_finite {
             return;
         }

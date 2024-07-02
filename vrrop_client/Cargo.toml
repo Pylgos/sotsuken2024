@@ -16,6 +16,7 @@ tokio-tungstenite.workspace = true
 tokio-util.workspace = true
 image.workspace = true
 nalgebra.workspace = true
+clap = { version = "4.5.8", features = ["derive"] }
 
 [build-dependencies]
 cmake = "0.1"

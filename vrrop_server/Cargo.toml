@@ -24,3 +24,4 @@ serde.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true
 rayon = "1.10.0"
+clap = { version = "4.5.8", features = ["derive"] }
