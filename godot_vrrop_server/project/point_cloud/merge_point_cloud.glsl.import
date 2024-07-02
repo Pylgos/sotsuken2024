@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dwx1ws72t6ha8"
+path="res://.godot/imported/merge_point_cloud.glsl-369dd7fde8509e0dcb0f4a13c948419e.res"
+
+[deps]
+
+source_file="res://point_cloud/merge_point_cloud.glsl"
+dest_files=["res://.godot/imported/merge_point_cloud.glsl-369dd7fde8509e0dcb0f4a13c948419e.res"]
+
+[params]
+
