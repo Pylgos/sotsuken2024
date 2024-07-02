@@ -62,8 +62,8 @@ impl<T: Primitive> Drop for ImageData<T> {
 }
 
 pub struct OdometryEvent {
-    pub translation: Vector3<f64>,
-    pub rotation: UnitQuaternion<f64>,
+    pub translation: Vector3<f32>,
+    pub rotation: UnitQuaternion<f32>,
     pub color_image: ColorImage,
     pub depth_image: DepthImage,
 }

@@ -12,17 +12,17 @@ typedef struct slam_core slam_core_t;
 typedef struct slam_core_image slam_core_image_t;
 
 typedef struct slam_core_camera_intrinsics {
-  double fx;
-  double fy;
-  double cx;
-  double cy;
+  float fx;
+  float fy;
+  float cx;
+  float cy;
   uint32_t width;
   uint32_t height;
 } slam_core_camera_intrinsics_t;
 
 typedef struct slam_core_odometry_event {
-  double translation[3];
-  double rotation[4];
+  float translation[3];
+  float rotation[4];
   slam_core_image_t* color;
   slam_core_image_t* depth;
 } slam_core_odometry_event_t;

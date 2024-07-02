@@ -14,7 +14,7 @@ mod slam_core_sys;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let image_interval = Duration::from_secs(1);
+    let image_interval = Duration::from_millis(1000);
 
     let client = Client::new(SocketAddr::from_str("127.0.0.1:6677")?).await?;
     let mut slam_core = SlamCore::new();
@@ -25,11 +25,12 @@ async fn main() -> Result<()> {
     let depth_intrinsics = *slam_core.depth_intrinsics();
     slam_core.register_odometry_event_handler(move |ev| {
         let stamp = std::time::SystemTime::now();
-        match odometry_sender.try_send(OdometryMessage {
+        let odometry = OdometryMessage {
             stamp,
             translation: ev.translation,
             rotation: ev.rotation,
-        }) {
+        };
+        match odometry_sender.try_send(odometry) {
             Ok(_) => {}
             Err(_) => eprintln!("odometry message dropped!"),
         }
@@ -41,7 +42,7 @@ async fn main() -> Result<()> {
             *guard = stamp;
         }
         match image_sender.try_send(ImagesMessage {
-            stamp,
+            odometry,
             color: ev.color_image,
             color_intrinsics,
             depth: ev.depth_image,

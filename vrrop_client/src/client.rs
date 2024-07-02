@@ -19,15 +19,15 @@ use vrrop_common::CameraIntrinsics;
 
 use crate::slam_core::{ColorImage, DepthImage};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct OdometryMessage {
     pub stamp: std::time::SystemTime,
-    pub translation: Vector3<f64>,
-    pub rotation: UnitQuaternion<f64>,
+    pub translation: Vector3<f32>,
+    pub rotation: UnitQuaternion<f32>,
 }
 
 pub struct ImagesMessage {
-    pub stamp: std::time::SystemTime,
+    pub odometry: OdometryMessage,
     pub color: ColorImage,
     pub color_intrinsics: CameraIntrinsics,
     pub depth: DepthImage,
@@ -153,11 +153,12 @@ fn encode_odometry_message(msg: &OdometryMessage) -> vrrop_common::OdometryMessa
 async fn encode_images_msssage(msg: ImagesMessage) -> Result<vrrop_common::ImagesMessage> {
     let (color, depth) = tokio::join!(encode_color(msg.color), encode_depth(msg.depth));
     Ok(vrrop_common::ImagesMessage {
-        stamp: msg.stamp,
+        odometry: encode_odometry_message(&msg.odometry),
         color_image: color?,
         color_intrinsics: msg.color_intrinsics,
         depth_image: depth?,
         depth_intrinsics: msg.depth_intrinsics,
+        depth_unit: 0.001,
     })
 }
 

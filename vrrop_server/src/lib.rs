@@ -10,23 +10,27 @@ use tokio::{
     task::JoinHandle,
 };
 
+mod pointcloud;
+pub use pointcloud::PointCloud;
+
 #[derive(Debug, Clone)]
 pub enum ServerMessage {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct OdometryMessage {
     pub stamp: std::time::SystemTime,
-    pub translation: Vector3<f64>,
-    pub rotation: UnitQuaternion<f64>,
+    pub translation: Vector3<f32>,
+    pub rotation: UnitQuaternion<f32>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ImagesMessage {
-    pub stamp: std::time::SystemTime,
+    pub odometry: OdometryMessage,
     pub color: ImageBuffer<Rgb<u8>, Vec<u8>>,
     pub color_intrinsics: CameraIntrinsics,
     pub depth: ImageBuffer<Luma<u16>, Vec<u16>>,
     pub depth_intrinsics: CameraIntrinsics,
+    pub depth_unit: f32,
 }
 
 pub struct Callbacks {
@@ -57,11 +61,12 @@ async fn decode_images_message(compressed: vrrop_common::ImagesMessage) -> Resul
     let color = tokio::task::spawn_blocking(move || image::load_from_memory(&color_image));
     let depth = tokio::task::spawn_blocking(move || image::load_from_memory(&depth_image));
     Ok(ImagesMessage {
-        stamp: compressed.stamp,
+        odometry: decode_odometry_message(compressed.odometry),
         color: color.await??.to_rgb8(),
         color_intrinsics: compressed.color_intrinsics,
         depth: depth.await??.to_luma16(),
         depth_intrinsics: compressed.depth_intrinsics,
+        depth_unit: compressed.depth_unit,
     })
 }
 

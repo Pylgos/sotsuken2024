@@ -1,0 +1,14 @@
+[configuration]
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.1
+reloadable = true
+
+[libraries]
+linux.debug.x86_64 =     "res://../../target/release/libgodot_vrrop_server.so"
+linux.release.x86_64 =   "res://../../target/release/libgodot_vrrop_server.so"
+windows.debug.x86_64 =   "res://../../target/debug/godot_vrrop_server.dll"
+windows.release.x86_64 = "res://../../target/release/godot_vrrop_server.dll"
+macos.debug =            "res://../../target/debug/libgodot_vrrop_server.dylib"
+macos.release =          "res://../../target/release/libgodot_vrrop_server.dylib"
+macos.debug.arm64 =      "res://../../target/debug/libgodot_vrrop_server.dylib"
+macos.release.arm64 =    "res://../../target/release/libgodot_vrrop_server.dylib"

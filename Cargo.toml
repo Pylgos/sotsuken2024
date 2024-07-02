@@ -1,19 +1,20 @@
 [workspace]
 resolver = "2"
 members = [
-  "bridge",
+  "bridge", "godot_vrrop_server/rust",
   "vrrop_client", "vrrop_common", "vrrop_server",
 ]
 
 [workspace.dependencies]
 vrrop_common = { path = "vrrop_common" }
+vrrop_server = { path = "vrrop_server" }
 
 anyhow = "1"
 bincode = "1.3.3"
 cobs = "0.2.3"
 crc = "3.0"
 futures = "0.3.30"
-godot = { git = "https://github.com/godot-rust/gdext", branch = "master" }
+godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-threads"] }
 image = "0.25.1"
 nalgebra = "0.32.6"
 packed_struct = "0.10"
