@@ -1,7 +1,4 @@
-use std::{
-    net::SocketAddr,
-    sync::Arc,
-};
+use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::Result;
 use futures::{SinkExt, StreamExt};
@@ -50,13 +47,15 @@ async fn client_loop(
     let image_receiver = Arc::new(Mutex::new(image_receiver));
     let odometry_receiver = Arc::new(Mutex::new(odometry_receiver));
     loop {
+        let url = format!("ws://{:}", target);
+        println!("Connecting to server: {:}", url);
         let ws_stream = loop {
-            match tokio_tungstenite::connect_async(format!("ws://{:}", target)).await {
+            match tokio_tungstenite::connect_async(&url).await {
                 Ok((ws_stream, _)) => {
                     break ws_stream;
                 }
-                Err(e) => {
-                    eprintln!("Error connecting to server: {:?}", e);
+                Err(_e) => {
+                    // eprintln!("Error connecting to server: {:?}", e);
                     tokio::select! {
                         _ = tokio::time::sleep(tokio::time::Duration::from_secs(1)) => {}
                         _ = cancel.cancelled() => { return Ok(()); }
@@ -64,6 +63,11 @@ async fn client_loop(
                 }
             }
         };
+        println!("Connected to server: {:}", url);
+
+        // We don't want to send old images
+        while let Ok(_) = image_receiver.lock().await.try_recv() {}
+
         let udp_socket = Arc::new(UdpSocket::bind("0.0.0.0:6678").await.unwrap());
         udp_socket.connect(target).await.unwrap();
 
@@ -71,7 +75,6 @@ async fn client_loop(
         let image_receiver = image_receiver.clone();
         let image_write_loop = tokio::task::spawn(async move {
             loop {
-                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
                 let Some(images) = image_receiver.lock().await.recv().await else {
                     break true;
                 };
@@ -85,7 +88,7 @@ async fn client_loop(
                 {
                     Ok(_) => {}
                     Err(e) => {
-                        eprintln!("Error sending message: {:?}", e);
+                        eprintln!("Error sending images message: {:}", e);
                         break false;
                     }
                 }
@@ -101,12 +104,19 @@ async fn client_loop(
                     };
                     let msg = encode_odometry_message(&odometry);
                     let encoded_msg = bincode::serialize(&msg).unwrap();
-                    udp_socket.send(&encoded_msg).await.unwrap();
+                    match udp_socket.send(&encoded_msg).await {
+                        Ok(_) => {}
+                        Err(e) => {
+                            eprintln!("Error sending odometry message: {:}", e);
+                            break;
+                        }
+                    }
                 }
             }
         });
         tokio::select! {
             quit = image_write_loop => {
+                println!("Disconnected");
                 if quit.unwrap() {
                     break;
                 }
@@ -122,10 +132,9 @@ impl Client {
         let (odometry_sender, odometry_receiver) = mpsc::channel(10);
         let cancel = CancellationToken::new();
         let cancel_clone = cancel.clone();
-        let _client_loop =
-            tokio::spawn(
-                async move { client_loop(target, image_receiver, odometry_receiver, cancel_clone).await },
-            );
+        let _client_loop = tokio::spawn(async move {
+            client_loop(target, image_receiver, odometry_receiver, cancel_clone).await
+        });
         Ok(Self {
             image_sender,
             odometry_sender,
