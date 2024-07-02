@@ -22,3 +22,13 @@ DebugCam="*res://addons/debug_camera/scripts/DebugCamAutoload.gd"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/debug_camera/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
+
+[xr]
+
+openxr/form_factor=1
+openxr/view_configuration=0

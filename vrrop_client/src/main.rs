@@ -9,9 +9,11 @@ mod slam_core_sys;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let image_interval = Duration::from_millis(100);
+    let image_interval = Duration::from_millis(1000);
 
     let client = Client::new(SocketAddr::from_str("127.0.0.1:6677")?).await?;
+    // let client = Client::new(SocketAddr::from_str("10.133.6.231:6677")?).await?;
+
     let mut slam_core = SlamCore::new();
     let image_sender = client.image_sender();
     let odometry_sender = client.odometry_sender();
