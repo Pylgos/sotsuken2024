@@ -44,11 +44,11 @@
     "rtabmap-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1715647598,
-        "narHash": "sha256-SY3RSujJ8LxI2haoGcvTCe3uYBwMWs59vuqNNo+Usng=",
+        "lastModified": 1720241490,
+        "narHash": "sha256-eFVS1zyjvvoh/6T7V8/OmRQTdAsOU3RaDLP/sAdwGqc=",
         "owner": "Pylgos",
         "repo": "rtabmap",
-        "rev": "ae3d99128c05af839f8aa179a53edbe35b97a2b9",
+        "rev": "a126dca2f6a4d90f5ddb27b936e98510c5f87165",
         "type": "github"
       },
       "original": {
