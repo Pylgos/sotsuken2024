@@ -32,7 +32,3 @@ textures/vram_compression/import_etc2_astc=true
 
 openxr/form_factor=1
 openxr/view_configuration=0
-
-[rendering]
-
-renderer/rendering_method="mobile"

@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://d1es02m3mmlo1"
+path="res://.godot/imported/deduplicate.glsl-040ceb1e965b504fb035cf2a2be6525b.res"
+
+[deps]
+
+source_file="res://point_cloud/deduplicate.glsl"
+dest_files=["res://.godot/imported/deduplicate.glsl-040ceb1e965b504fb035cf2a2be6525b.res"]
+
+[params]
+
