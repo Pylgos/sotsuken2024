@@ -52,7 +52,11 @@ impl PointCloudVisualizer {
         let Some(material) = self.material.clone() else {
             return;
         };
-        let modified_grids = self.cloud.merge_images_msg(&image.bind().inner);
+        let image = image.bind();
+        let Some(image) = image.inner.as_ref() else {
+            return;
+        };
+        let modified_grids = self.cloud.merge_images_msg(image);
         for grid_index in modified_grids {
             if let Some(mesh) = create_mesh(grid_index, &self.cloud, material.clone()) {
                 if let Some(mesh_inst) = self.meshes.get_mut(&grid_index) {

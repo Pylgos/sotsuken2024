@@ -1,13 +1,12 @@
 use godot::engine::WeakRef;
 use godot::global::weakref;
 use godot::prelude::*;
-use godot::{classes::RefCounted, engine::Image};
-use image::EncodableLayout;
+use godot::classes::RefCounted;
 
 use crate::{SharedGd, TOKIO_RUNTIME};
 
 #[derive(GodotClass)]
-#[class(base=RefCounted)]
+#[class(init, base=RefCounted)]
 pub struct VrropServer {
     base: Base<RefCounted>,
     pub inner: Option<vrrop_server::Server>,
@@ -53,84 +52,50 @@ impl VrropServer {
     }
 }
 
-#[godot_api]
-impl IRefCounted for VrropServer {
-    fn init(base: Base<RefCounted>) -> Self {
-        Self { base, inner: None }
-    }
-}
-
 #[derive(GodotClass)]
-#[class(no_init, base=RefCounted)]
+#[class(init, base=RefCounted)]
 pub struct ImagesMessage {
     base: Base<RefCounted>,
-    pub inner: vrrop_server::ImagesMessage,
-}
-
-#[godot_api]
-impl ImagesMessage {
-    #[func]
-    fn convert_depth(&self) -> Gd<Image> {
-        let depth = &self.inner.depth;
-        let depth_data: &[u8] = depth.as_bytes();
-        Image::create_from_data(
-            depth.width() as _,
-            depth.height() as _,
-            false,
-            godot::classes::image::Format::LA8,
-            PackedByteArray::from(depth_data),
-        )
-        .unwrap()
-    }
-
-    #[func]
-    fn convert_color(&self) -> Gd<Image> {
-        let color = &self.inner.color;
-        let color_data: &[u8] = color.as_bytes();
-        Image::create_from_data(
-            color.width() as _,
-            color.height() as _,
-            false,
-            godot::classes::image::Format::RGB8,
-            PackedByteArray::from(color_data),
-        )
-        .unwrap()
-    }
+    pub inner: Option<vrrop_server::ImagesMessage>,
 }
 
 impl ImagesMessage {
     fn new_gd(inner: vrrop_server::ImagesMessage) -> Gd<Self> {
-        Gd::from_init_fn(|base| Self { base, inner })
+        Gd::from_init_fn(|base| Self { base, inner: Some(inner) })
     }
 }
 
 #[derive(GodotClass)]
-#[class(no_init, base=RefCounted)]
+#[class(init, base=RefCounted)]
 pub struct OdometryMessage {
     base: Base<RefCounted>,
-    pub inner: vrrop_server::OdometryMessage,
+    pub inner: Option<vrrop_server::OdometryMessage>,
 }
 
 #[godot_api]
 impl OdometryMessage {
     #[func]
     fn translation(&self) -> Vector3 {
-        Vector3::new(
-            self.inner.translation.x,
-            self.inner.translation.y,
-            self.inner.translation.z,
-        )
+        if let Some(tr) = self.inner.as_ref() {
+            Vector3::new(tr.translation.x, tr.translation.y, tr.translation.z)
+        } else {
+            Vector3::new(0.0, 0.0, 0.0)
+        }
     }
 
     #[func]
     fn rotation(&self) -> Quaternion {
-        let v = self.inner.rotation.as_vector();
-        Quaternion::new(v.x, v.y, v.z, v.w)
+        if let Some(rot) = self.inner.as_ref() {
+            let v = rot.rotation.as_vector();
+            Quaternion::new(v.x, v.y, v.z, v.w)
+        } else {
+            Quaternion::new(0.0, 0.0, 0.0, 1.0)
+        }
     }
 }
 
 impl OdometryMessage {
     fn new_gd(inner: vrrop_server::OdometryMessage) -> Gd<Self> {
-        Gd::from_init_fn(|base| Self { base, inner })
+        Gd::from_init_fn(|base| Self { base, inner: Some(inner) })
     }
 }
