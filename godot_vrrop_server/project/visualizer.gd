@@ -26,7 +26,3 @@ func _ready():
 			camera_marker.position = odom.translation()
 			camera_marker.quaternion = odom.rotation()
 	)
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass

@@ -26,6 +26,7 @@ enabled=PackedStringArray("res://addons/debug_camera/plugin.cfg")
 [rendering]
 
 renderer/rendering_method="mobile"
+driver/threads/thread_model=2
 textures/vram_compression/import_etc2_astc=true
 
 [xr]
