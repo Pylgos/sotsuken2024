@@ -2,7 +2,7 @@ use anyhow::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let server = vrrop_server::Server::new(vrrop_server::Callbacks::new(
+    let _server = vrrop_server::Server::new(vrrop_server::Callbacks::new(
         |msg| {
             println!("odometry received");
             println!("translation: {}", msg.translation);

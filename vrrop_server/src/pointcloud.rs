@@ -138,26 +138,22 @@ impl PointCloud {
                 let Some(point) = points.get(i) else {
                     break;
                 };
-                match (
+                if let (Some(_), Some(depth_pixel)) = (
                     color_projector.point_to_pixel(point.position),
                     depth_projector.point_to_pixel(point.position),
                 ) {
-                    (Some(_), Some(depth_pixel)) => {
-                        // let orig_depth = depth_projector.point_depth(point.position);
-                        let depth = image_msg.depth.get_pixel(depth_pixel.x, depth_pixel.y)[0]
-                            as f32
-                            * image_msg.depth_unit;
-                        if depth != 0.0 {
-                            modified = true;
-                            points.swap_remove(i);
-                            continue;
-                        }
+                    // let orig_depth = depth_projector.point_depth(point.position);
+                    let depth = image_msg.depth.get_pixel(depth_pixel.x, depth_pixel.y)[0] as f32
+                        * image_msg.depth_unit;
+                    if depth != 0.0 {
+                        modified = true;
+                        points.swap_remove(i);
+                        continue;
                     }
-                    _ => {}
                 }
                 i += 1;
             }
-            if points.len() == 0 {
+            if points.is_empty() {
                 self.grid_map.remove_grid(grid_index);
             }
             if modified {

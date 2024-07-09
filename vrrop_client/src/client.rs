@@ -66,7 +66,7 @@ async fn client_loop(
         println!("Connected to server: {:}", url);
 
         // We don't want to send old images
-        while let Ok(_) = image_receiver.lock().await.try_recv() {}
+        while image_receiver.lock().await.try_recv().is_ok() {}
 
         let udp_socket = Arc::new(UdpSocket::bind("0.0.0.0:6678").await.unwrap());
         udp_socket.connect(target).await.unwrap();

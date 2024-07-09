@@ -21,9 +21,7 @@ fn create_mesh(
     cloud: &PointCloud,
     material: Gd<Material>,
 ) -> Option<Gd<ImmediateMesh>> {
-    let Some(points) = cloud.grid_map().points_in_grid(grid_index) else {
-        return None;
-    };
+    let points = cloud.grid_map().points_in_grid(grid_index)?;
     let mut mesh = ImmediateMesh::new_gd();
     mesh.call(
         "surface_begin".into(),
