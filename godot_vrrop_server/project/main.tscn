@@ -1,10 +1,13 @@
-[gd_scene load_steps=7 format=3 uid="uid://bypd5k6iiao8m"]
+[gd_scene load_steps=9 format=3 uid="uid://bypd5k6iiao8m"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_oofns"]
 [ext_resource type="Script" path="res://addons/debug_camera/scripts/DebugCamera3D.gd" id="2_ea4aw"]
+[ext_resource type="Script" path="res://view_pyramid.gd" id="3_k0oo7"]
 
 [sub_resource type="PrismMesh" id="PrismMesh_eh7i8"]
 size = Vector3(0.1, 0.1, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0bn7c"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_3ldv6"]
 
@@ -36,6 +39,13 @@ script = ExtResource("2_ea4aw")
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 8.05961e-16, -9.28477e-15, 0, 1, 0, 0, 0)
 mesh = SubResource("PrismMesh_eh7i8")
 skeleton = NodePath("../../..")
+
+[node name="Node3D2" type="Node3D" parent="Visualizer/CameraMarker"]
+script = ExtResource("3_k0oo7")
+material = SubResource("StandardMaterial3D_0bn7c")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Visualizer/CameraMarker/Node3D2"]
+skeleton = NodePath("../../Node3D2")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_mmpcl")

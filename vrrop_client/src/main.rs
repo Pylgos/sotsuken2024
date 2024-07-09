@@ -30,6 +30,8 @@ async fn main() -> Result<()> {
     let last_image_send = Arc::new(std::sync::Mutex::new(std::time::SystemTime::now()));
     let color_intrinsics = *slam_core.color_intrinsics();
     let depth_intrinsics = *slam_core.depth_intrinsics();
+    println!("color_intrinsics: {:?}", color_intrinsics);
+    println!("depth_intrinsics: {:?}", depth_intrinsics);
     slam_core.register_odometry_event_handler(move |ev| {
         let stamp = std::time::SystemTime::now();
         let pose_is_finite = ev.translation.iter().all(|x| x.is_finite())

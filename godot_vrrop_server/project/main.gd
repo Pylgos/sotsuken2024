@@ -31,8 +31,10 @@ func _ready():
 	server.images_received.connect(
 		func(image: ImagesMessage):
 			print(image)
-			update_pointcloud(image)
-			#WorkerThreadPool.add_task()
+			WorkerThreadPool.add_task(
+				func():
+					update_pointcloud(image)
+			)
 	)
 	server.odometry_received.connect(
 		func(odom: OdometryMessage):

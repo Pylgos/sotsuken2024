@@ -70,15 +70,20 @@ impl PointCloud {
             .filter_map(|(x, y)| {
                 let depth_pixel = Vector2::new(x, y);
                 let depth = image_msg.depth.get_pixel(x, y)[0] as f32 * image_msg.depth_unit;
-                if depth == 0.0 || depth > 5.0 {
-                    return None;
-                }
+                
+                let (depth, age) = if depth == 0.0  {
+                    (10.0, max_age - 1)
+                } else if depth > 5.0 {
+                    (depth, max_age - 1)
+                } else {
+                    (depth, 0)
+                };
                 let point = depth_projector.pixel_to_point(depth_pixel, depth);
                 if let Some(color_pixel) = color_projector.point_to_pixel(point) {
                     let color = image_msg.color.get_pixel(color_pixel.x, color_pixel.y).0;
                     let size = color_projector.point_size(depth);
                     Some(Point {
-                        age: 0,
+                        age,
                         position: point,
                         color: Vector3::new(color[0], color[1], color[2]),
                         size,
@@ -89,9 +94,6 @@ impl PointCloud {
             });
 
         let mut new_points: Vec<_> = filtered_points_iter.chain(additional_points_iter).collect();
-        // if new_points.len() > maximum_point_count {
-        //     new_points.resize_with(maximum_point_count, || unreachable!());
-        // }
 
         println!("number of points: {}  delta: {}", new_points.len(), new_points.len() as i64 - self.points.len() as i64);
 

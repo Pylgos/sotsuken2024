@@ -1,6 +1,7 @@
 #include "slam_core.h"
 #include "CameraRs2D4xx.h"
 #include "rtabmap/core/CameraModel.h"
+#include "rtabmap/core/Parameters.h"
 #include "rtabmap/core/SensorCaptureThread.h"
 #include <cstring>
 #include <functional>
@@ -53,10 +54,14 @@ public:
 
       ret->sensor_thread_ =
           std::make_unique<rtabmap::SensorCaptureThread>(camera);
-      ret->sensor_thread_->enableIMUFiltering(1, rtabmap::ParametersMap(),
-                                              true);
-      ret->odom_thread_ = std::make_unique<rtabmap::OdometryThread>(
-          rtabmap::Odometry::create());
+      ret->sensor_thread_->disableIMUFiltering();
+      // ret->sensor_thread_->enableIMUFiltering(1, rtabmap::ParametersMap(),
+      //                                         true);
+      rtabmap::ParametersMap odom_params;
+      // odom_params.insert(rtabmap::ParametersPair("Kp/MaxFeatures", "-1"));
+      auto odometry = rtabmap::Odometry::create(odom_params);
+
+      ret->odom_thread_ = std::make_unique<rtabmap::OdometryThread>(odometry);
       rtabmap::ParametersMap params;
       auto rtabmap = new rtabmap::Rtabmap{};
       rtabmap->init(params);
