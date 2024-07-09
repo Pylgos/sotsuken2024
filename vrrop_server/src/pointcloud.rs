@@ -165,7 +165,7 @@ impl PointCloud {
             for x in 0..image_msg.depth.width() {
                 let depth_pixel = Vector2::new(x, y);
                 let depth = image_msg.depth.get_pixel(x, y)[0] as f32 * image_msg.depth_unit;
-                if depth == 0.0 {
+                if depth == 0.0 || depth > max_depth {
                     continue;
                 }
                 let point = depth_projector.pixel_to_point(depth_pixel, depth);
