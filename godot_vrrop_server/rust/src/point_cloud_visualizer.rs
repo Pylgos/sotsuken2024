@@ -91,23 +91,27 @@ fn create_debug_mesh(
         mesh.surface_add_vertex(c[3]);
         mesh.surface_add_vertex(c[7]);
     };
-    mesh.call("surface_begin".into(), &[PrimitiveType::LINES.to_variant()]);
-    for grid_index in cloud
-        .grid_map()
-        .grids()
-        .keys()
-        .filter(|g| !modified_grids.contains(g))
-    {
-        add_cube(&mut mesh, *grid_index);
-    }
-    mesh.surface_end();
+    let mut surface_count = 0;
+    if cloud.grid_map().grids().len() > modified_grids.len() {
+        mesh.call("surface_begin".into(), &[PrimitiveType::LINES.to_variant()]);
+        for grid_index in cloud
+            .grid_map()
+            .grids()
+            .keys()
+            .filter(|g| !modified_grids.contains(g))
+        {
+            add_cube(&mut mesh, *grid_index);
+        }
+        mesh.surface_end();
+        mesh.surface_set_material(surface_count, normal);
+        surface_count += 1;
+    } 
     mesh.call("surface_begin".into(), &[PrimitiveType::LINES.to_variant()]);
     for grid_index in modified_grids {
         add_cube(&mut mesh, *grid_index);
     }
     mesh.surface_end();
-    mesh.surface_set_material(0, normal);
-    mesh.surface_set_material(1, modified);
+    mesh.surface_set_material(surface_count, modified);
     Some(mesh)
 }
 
