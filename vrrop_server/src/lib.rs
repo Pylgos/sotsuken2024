@@ -12,6 +12,7 @@ use tokio::{
 
 mod pointcloud;
 pub use pointcloud::PointCloud;
+pub use pointcloud::GridIndex;
 
 #[derive(Debug, Clone)]
 pub enum ServerMessage {}
@@ -51,8 +52,8 @@ impl Callbacks {
 }
 
 pub struct Server {
-    accept_loop: JoinHandle<()>,
-    server_msg_tx: broadcast::Sender<ServerMessage>,
+    _accept_loop: JoinHandle<()>,
+    _server_msg_tx: broadcast::Sender<ServerMessage>,
 }
 
 async fn decode_images_message(compressed: vrrop_common::ImagesMessage) -> Result<ImagesMessage> {
@@ -97,11 +98,11 @@ async fn handle_connection(
     peer_addr.set_port(6678);
     udp_sock.connect(peer_addr).await?;
     let ws = tokio_tungstenite::accept_async(stream).await?;
-    let (outgoing, incoming) = ws.split();
+    let (_outgoing, incoming) = ws.split();
     tokio::spawn(async move {
         loop {
             match server_msg_recv.recv().await {
-                Ok(msg) => {}
+                Ok(_msg) => {}
                 Err(broadcast::error::RecvError::Closed) => {
                     break;
                 }
@@ -170,8 +171,8 @@ impl Server {
             }
         });
         Ok(Self {
-            accept_loop,
-            server_msg_tx,
+            _accept_loop: accept_loop,
+            _server_msg_tx: server_msg_tx,
         })
     }
 }

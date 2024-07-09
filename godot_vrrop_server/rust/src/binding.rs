@@ -1,5 +1,3 @@
-use std::borrow::{Borrow, BorrowMut};
-
 use godot::engine::WeakRef;
 use godot::global::weakref;
 use godot::prelude::*;
@@ -134,33 +132,5 @@ impl OdometryMessage {
 impl OdometryMessage {
     fn new_gd(inner: vrrop_server::OdometryMessage) -> Gd<Self> {
         Gd::from_init_fn(|base| Self { base, inner })
-    }
-}
-
-#[derive(GodotClass)]
-#[class(base=RefCounted)]
-pub struct PointCloud {
-    base: Base<RefCounted>,
-    pub inner: vrrop_server::PointCloud,
-}
-
-#[godot_api]
-impl PointCloud {
-    #[func]
-    fn merge_images_msg(&self, image_msg: Gd<ImagesMessage>) -> Gd<PointCloud> {
-        Gd::from_init_fn(move |base| PointCloud {
-            base,
-            inner: self.inner.merge_images_msg(&image_msg.bind().inner),
-        })
-    }
-}
-
-#[godot_api]
-impl IRefCounted for PointCloud {
-    fn init(base: Base<RefCounted>) -> Self {
-        Self {
-            base,
-            inner: vrrop_server::PointCloud::new(),
-        }
     }
 }

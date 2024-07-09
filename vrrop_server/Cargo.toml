@@ -18,6 +18,7 @@ vrrop_common.workspace = true
 anyhow.workspace = true
 bincode.workspace = true
 futures.workspace = true
+fxhash.workspace = true
 image.workspace = true
 nalgebra.workspace = true
 serde.workspace = true

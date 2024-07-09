@@ -11,6 +11,7 @@ vrrop_common.workspace = true
 vrrop_server.workspace = true
 
 anyhow.workspace = true
+fxhash.workspace = true
 godot.workspace = true
 image.workspace = true
 nalgebra.workspace = true
