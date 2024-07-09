@@ -1,7 +1,7 @@
 [gd_scene load_steps=9 format=3 uid="uid://bypd5k6iiao8m"]
 
-[ext_resource type="Script" path="res://main.gd" id="1_oofns"]
 [ext_resource type="Script" path="res://addons/debug_camera/scripts/DebugCamera3D.gd" id="2_ea4aw"]
+[ext_resource type="Script" path="res://visualizer.gd" id="2_oj8io"]
 [ext_resource type="Script" path="res://view_pyramid.gd" id="3_k0oo7"]
 
 [sub_resource type="PrismMesh" id="PrismMesh_eh7i8"]
@@ -19,13 +19,13 @@ background_mode = 2
 sky = SubResource("Sky_h0j5w")
 
 [node name="Main" type="Node3D"]
-script = ExtResource("1_oofns")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 0, 0, 0)
 
 [node name="Visualizer" type="MeshInstance3D" parent="."]
 transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
+script = ExtResource("2_oj8io")
 
 [node name="CameraMarker" type="Node3D" parent="Visualizer"]
 
@@ -45,7 +45,8 @@ script = ExtResource("3_k0oo7")
 material = SubResource("StandardMaterial3D_0bn7c")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Visualizer/CameraMarker/Node3D2"]
-skeleton = NodePath("../../Node3D2")
+
+[node name="PointCloudVisualizer" type="PointCloudVisualizer" parent="Visualizer"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_mmpcl")

@@ -3,7 +3,7 @@ extends Node3D
 var server := VrropServer.new()
 var pointcloud_guard := Mutex.new()
 var pointcloud := PointCloud.new()
-var point_cloud_mesh := PointCloudMesh.new()
+var point_cloud_mesh := PointCloudVisualizer.new()
 @onready var visualizer := $Visualizer
 @onready var camera_marker := $Visualizer/CameraMarker
 const shader = preload("res://point_cloud.gdshader")

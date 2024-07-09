@@ -3,7 +3,7 @@ use std::{ops::Deref, sync::OnceLock};
 use godot::prelude::*;
 
 mod binding;
-mod point_cloud_mesh;
+mod point_cloud_visualizer;
 
 static TOKIO_RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 
