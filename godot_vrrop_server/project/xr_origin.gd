@@ -11,9 +11,9 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	var hmd_transf = XRServer.get_hmd_transform()
 	var real_camera_pos: Vector3 = camera_marker.global_position
-	global_position += real_camera_pos - xr_camera_3d.global_position
+	global_position += real_camera_pos - global_transform * hmd_transf.origin
 	if right.is_button_pressed("ax_button"):
 		var real_camera_rot: Basis = camera_marker.basis
-		basis = xr_camera_3d.basis.inverse() * real_camera_rot
-
+		basis = hmd_transf.basis.inverse() * real_camera_rot
