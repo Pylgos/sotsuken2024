@@ -1,0 +1,73 @@
+[gd_scene load_steps=12 format=3 uid="uid://fhneq6mqnwas"]
+
+[ext_resource type="Script" path="res://xr_main.gd" id="1_rr8o4"]
+[ext_resource type="Script" path="res://visualizer.gd" id="1_w6j6j"]
+[ext_resource type="Script" path="res://view_pyramid.gd" id="3_evk1a"]
+[ext_resource type="Script" path="res://xr_origin.gd" id="4_mckb6"]
+
+[sub_resource type="PrismMesh" id="PrismMesh_eh7i8"]
+size = Vector3(0.1, 0.1, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0bn7c"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8eqxl"]
+transparency = 1
+albedo_color = Color(0, 1, 0, 0.498039)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3rste"]
+albedo_color = Color(1, 1, 0, 1)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_3ldv6"]
+
+[sub_resource type="Sky" id="Sky_h0j5w"]
+sky_material = SubResource("ProceduralSkyMaterial_3ldv6")
+
+[sub_resource type="Environment" id="Environment_mmpcl"]
+background_mode = 2
+sky = SubResource("Sky_h0j5w")
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_rr8o4")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 0, 0, 0)
+
+[node name="Visualizer" type="MeshInstance3D" parent="."]
+transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
+script = ExtResource("1_w6j6j")
+
+[node name="CameraMarker" type="Node3D" parent="Visualizer"]
+
+[node name="Node3D" type="Node3D" parent="Visualizer/CameraMarker"]
+transform = Transform3D(-4.37114e-08, -4.37114e-08, -1, -1, -1.31362e-14, 4.37114e-08, -1.63902e-14, 1, -4.37114e-08, 0, 0, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Visualizer/CameraMarker"]
+transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 8.05961e-16, -9.28477e-15, 0, 1, 0, 0, 0)
+mesh = SubResource("PrismMesh_eh7i8")
+skeleton = NodePath("../../..")
+
+[node name="Node3D2" type="Node3D" parent="Visualizer/CameraMarker"]
+script = ExtResource("3_evk1a")
+material = SubResource("StandardMaterial3D_0bn7c")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Visualizer/CameraMarker/Node3D2"]
+
+[node name="PointCloudVisualizer" type="PointCloudVisualizer" parent="Visualizer"]
+debug_mesh_material_normal = SubResource("StandardMaterial3D_8eqxl")
+debug_mesh_material_modified = SubResource("StandardMaterial3D_3rste")
+show_debug_mesh = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_mmpcl")
+
+[node name="XROrigin3D" type="XROrigin3D" parent="."]
+current = true
+script = ExtResource("4_mckb6")
+
+[node name="Left" type="XRController3D" parent="XROrigin3D"]
+tracker = &"left_hand"
+
+[node name="Right" type="XRController3D" parent="XROrigin3D"]
+tracker = &"right_hand"
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]

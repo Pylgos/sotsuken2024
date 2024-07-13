@@ -14,14 +14,7 @@ config/name="VrropServer"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.2", "GL Compatibility")
 config/icon="res://icon.svg"
-
-[autoload]
-
-DebugCam="*res://addons/debug_camera/scripts/DebugCamAutoload.gd"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/debug_camera/plugin.cfg")
+run/main_scene.xr="res://xr_main.tscn"
 
 [rendering]
 
@@ -31,5 +24,7 @@ textures/vram_compression/import_etc2_astc=true
 
 [xr]
 
-openxr/form_factor=1
-openxr/view_configuration=0
+openxr/enabled=true
+openxr/form_factor=0
+openxr/view_configuration=1
+shaders/enabled=true

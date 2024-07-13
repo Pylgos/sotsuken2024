@@ -1,4 +1,6 @@
 shader_type spatial;
+render_mode unshaded;
+
 
 void vertex() {
 	float size = COLOR.a * 15.0;
