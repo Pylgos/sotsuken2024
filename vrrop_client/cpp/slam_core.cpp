@@ -197,4 +197,3 @@ void *slam_core_image_get_data(slam_core_image_t *image) {
 
 void slam_core_image_destroy(slam_core_image_t *image) { delete image; }
 }
-#undef THIS
