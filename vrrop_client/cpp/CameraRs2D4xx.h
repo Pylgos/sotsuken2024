@@ -79,9 +79,7 @@ private:
   void imu_callback(rs2::frame frame);
   void frame_callback(rs2::frame frame);
   void multiple_message_callback(rs2::frame frame);
-  void getPoseAndIMU(const double &stamp, rtabmap::Transform &pose,
-                     unsigned int &poseConfidence, rtabmap::IMU &imu,
-                     int maxWaitTimeMs = 35);
+  void getIMU(const double &stamp, rtabmap::IMU &imu, int maxWaitTimeMs = 35);
 
 protected:
   virtual rtabmap::SensorData
@@ -101,8 +99,6 @@ private:
   rtabmap::Transform imuLocalTransform_;
   std::map<double, cv::Vec3f> accBuffer_;
   std::map<double, cv::Vec3f> gyroBuffer_;
-  std::map<double, std::pair<rtabmap::Transform, unsigned int>>
-      poseBuffer_; // <stamp, <Pose, confidence: 1=lost, 2=low, 3=high> >
   UMutex poseMutex_;
   UMutex imuMutex_;
   double lastImuStamp_;

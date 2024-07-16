@@ -102,11 +102,11 @@ void CameraRs2D4xx::imu_callback(rs2::frame frame) {
   cv::Vec3f crnt_reading =
       *reinterpret_cast<const cv::Vec3f *>(frame.get_data());
   // UDEBUG("%s callback! %f (%f %f %f)",
-  //		stream == RS2_STREAM_GYRO?"GYRO":"ACC",
-  //		frame.get_timestamp(),
-  //		crnt_reading[0],
-  //		crnt_reading[1],
-  //		crnt_reading[2]);
+  // 		stream == RS2_STREAM_GYRO?"GYRO":"ACC",
+  // 		frame.get_timestamp(),
+  // 		crnt_reading[0],
+  // 		crnt_reading[1],
+  // 		crnt_reading[2]);
   UScopeMutex sm(imuMutex_);
   if (stream == RS2_STREAM_GYRO) {
     gyroBuffer_.insert(gyroBuffer_.end(),
@@ -154,79 +154,8 @@ void CameraRs2D4xx::multiple_message_callback(rs2::frame frame) {
   }
 }
 
-void CameraRs2D4xx::getPoseAndIMU(const double &stamp, Transform &pose,
-                                  unsigned int &poseConfidence, IMU &imu,
-                                  int maxWaitTimeMs) {
-  pose.setNull();
+void CameraRs2D4xx::getIMU(const double &stamp, IMU &imu, int maxWaitTimeMs) {
   imu = IMU();
-  poseConfidence = 0;
-
-  // Interpolate pose
-  if (!poseBuffer_.empty()) {
-    poseMutex_.lock();
-    int waitTry = 0;
-    while (maxWaitTimeMs > 0 && poseBuffer_.rbegin()->first < stamp &&
-           waitTry < maxWaitTimeMs) {
-      poseMutex_.unlock();
-      ++waitTry;
-      uSleep(1);
-      poseMutex_.lock();
-    }
-    if (poseBuffer_.rbegin()->first < stamp) {
-      if (maxWaitTimeMs > 0) {
-        UWARN("Could not find poses to interpolate at image time %f after "
-              "waiting %d ms (last is %f)...",
-              stamp / 1000.0, maxWaitTimeMs,
-              poseBuffer_.rbegin()->first / 1000.0);
-      }
-    } else {
-      std::map<double, std::pair<Transform, unsigned int>>::const_iterator
-          iterB = poseBuffer_.lower_bound(stamp);
-      std::map<double, std::pair<Transform, unsigned int>>::const_iterator
-          iterA = iterB;
-      if (iterA != poseBuffer_.begin()) {
-        iterA = --iterA;
-      }
-      if (iterB == poseBuffer_.end()) {
-        iterB = --iterB;
-      }
-      if (iterA == iterB && stamp == iterA->first) {
-        pose = iterA->second.first;
-        poseConfidence = iterA->second.second;
-      } else if (stamp >= iterA->first && stamp <= iterB->first) {
-        pose = iterA->second.first.interpolate(
-            (stamp - iterA->first) / (iterB->first - iterA->first),
-            iterB->second.first);
-        poseConfidence = iterA->second.second;
-      } else {
-        if (!imuGlobalSyncWarningShown_) {
-          if (stamp < iterA->first) {
-            UWARN("Could not find pose data to interpolate at image time %f "
-                  "(earliest is %f). Are sensors synchronized?",
-                  stamp / 1000.0, iterA->first / 1000.0);
-          } else {
-            UWARN("Could not find pose data to interpolate at image time %f "
-                  "(between %f and %f). Are sensors synchronized?",
-                  stamp / 1000.0, iterA->first / 1000.0, iterB->first / 1000.0);
-          }
-        }
-        if (!globalTimeSync_) {
-          if (!imuGlobalSyncWarningShown_) {
-            UWARN("As globalTimeSync option is off, the received pose, gyro "
-                  "and accelerometer will be re-stamped with image time. This "
-                  "message is only shown once.");
-            imuGlobalSyncWarningShown_ = true;
-          }
-          std::map<double,
-                   std::pair<Transform, unsigned int>>::const_reverse_iterator
-              iterC = poseBuffer_.rbegin();
-          pose = iterC->second.first;
-          poseConfidence = iterC->second.second;
-        }
-      }
-    }
-    poseMutex_.unlock();
-  }
 
   if (accBuffer_.empty() || gyroBuffer_.empty()) {
     return;
@@ -500,6 +429,7 @@ bool CameraRs2D4xx::init(const std::string &calibrationFolder,
   }
 
   depth_stereo_sensor.set_option(rs2_option::RS2_OPTION_EMITTER_ENABLED, false);
+  motion_sensor.set_option(rs2_option::RS2_OPTION_ENABLE_MOTION_CORRECTION, true);
   std::vector<rs2::sensor> sensors = {color_sensor, depth_stereo_sensor,
                                       motion_sensor};
 
@@ -713,22 +643,24 @@ bool CameraRs2D4xx::odomProvided() const { return false; }
 
 bool CameraRs2D4xx::getPose(double stamp, Transform &pose, cv::Mat &covariance,
                             double maxWaitTime) {
-  IMU imu;
-  unsigned int confidence = 0;
-  double rsStamp = stamp * 1000.0;
-  Transform p;
-  getPoseAndIMU(rsStamp, p, confidence, imu, maxWaitTime * 1000);
-
-  if (!p.isNull()) {
-    // Transform in base frame
-    pose = this->getLocalTransform() * p * this->getLocalTransform().inverse();
-
-    covariance = cv::Mat::eye(6, 6, CV_64FC1) * 0.0001;
-    covariance.rowRange(0, 3) *= pow(10, 3 - (int)confidence);
-    covariance.rowRange(3, 6) *= pow(10, 1 - (int)confidence);
-    return true;
-  }
   return false;
+  // IMU imu;
+  // unsigned int confidence = 0;
+  // double rsStamp = stamp * 1000.0;
+  // Transform p;
+  // getPoseAndIMU(rsStamp, p, confidence, imu, maxWaitTime * 1000);
+
+  // if (!p.isNull()) {
+  //   // Transform in base frame
+  //   pose = this->getLocalTransform() * p *
+  //   this->getLocalTransform().inverse();
+
+  //   covariance = cv::Mat::eye(6, 6, CV_64FC1) * 0.0001;
+  //   covariance.rowRange(0, 3) *= pow(10, 3 - (int)confidence);
+  //   covariance.rowRange(3, 6) *= pow(10, 1 - (int)confidence);
+  //   return true;
+  // }
+  // return false;
 }
 
 void CameraRs2D4xx::setColorResolution(int width, int height, int fps) {
@@ -805,10 +737,8 @@ SensorData CameraRs2D4xx::captureImage(SensorCaptureInfo *info) {
                         color);
 
       IMU imu;
-      unsigned int confidence = 0;
       double imuStamp = stamp * 1000.0;
-      Transform pose;
-      getPoseAndIMU(imuStamp, pose, confidence, imu);
+      getIMU(imuStamp, imu);
 
       if (!imu.empty() && !isInterIMUPublishing()) {
         data.setIMU(imu);
@@ -834,9 +764,8 @@ SensorData CameraRs2D4xx::captureImage(SensorCaptureInfo *info) {
 
           int pub = 0;
           for (size_t i = 0; i < stamps.size(); ++i) {
-            Transform tmp;
             IMU imuTmp;
-            getPoseAndIMU(stamps[i], tmp, confidence, imuTmp);
+            getIMU(stamps[i], imuTmp);
             if (!imuTmp.empty()) {
               this->postInterIMU(imuTmp, stamps[i] / 1000.0);
               pub++;
