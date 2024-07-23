@@ -26,7 +26,7 @@ const CRC: crc::Crc<u16> = crc::Crc::<u16>::new(&crc::CRC_16_XMODEM);
 impl<R: BufRead, W: Write> Bridge<R, W> {
     pub fn new(reader: R, writer: W) -> Self {
         Self {
-            reader: reader,
+            reader,
             writer,
             synced: true,
         }
