@@ -15,11 +15,16 @@ struct PointCloudVisualizer {
     #[export]
     debug_mesh_material_modified: Option<Gd<Material>>,
     #[export]
+    #[var(get, set = set_show_debug_mesh)]
     show_debug_mesh: bool,
+    #[export]
+    grid_size: f32,
+    #[export]
+    material: Option<Gd<Material>>,
+
     meshes: FxHashMap<GridIndex, Gd<MeshInstance3D>>,
     debug_mesh_inst: Gd<MeshInstance3D>,
     cloud: PointCloud,
-    material: Option<Gd<Material>>,
     base: Base<Node3D>,
 }
 
@@ -105,13 +110,15 @@ fn create_debug_mesh(
         mesh.surface_end();
         mesh.surface_set_material(surface_count, normal);
         surface_count += 1;
-    } 
-    mesh.call("surface_begin".into(), &[PrimitiveType::LINES.to_variant()]);
-    for grid_index in modified_grids {
-        add_cube(&mut mesh, *grid_index);
     }
-    mesh.surface_end();
-    mesh.surface_set_material(surface_count, modified);
+    if modified_grids.len() > 0 {
+        mesh.call("surface_begin".into(), &[PrimitiveType::LINES.to_variant()]);
+        for grid_index in modified_grids {
+            add_cube(&mut mesh, *grid_index);
+        }
+        mesh.surface_end();
+        mesh.surface_set_material(surface_count, modified);
+    }
     Some(mesh)
 }
 
@@ -157,22 +164,53 @@ impl PointCloudVisualizer {
     }
 
     #[func]
-    fn set_material(&mut self, material: Option<Gd<Material>>) {
-        self.material = material;
+    fn init(&mut self) {
+        self.cloud = PointCloud::new(self.grid_size);
+        for child in self.base().get_children().iter_shared() {
+            Gd::free(child);
+        }
+        self.meshes.clear();
+        self.debug_mesh_inst.set("mesh".into(), Variant::nil());
+    }
+
+    #[func]
+    fn set_show_debug_mesh(&mut self, show: bool) {
+        if show == self.show_debug_mesh {
+            return;
+        }
+        self.show_debug_mesh = show;
+
+        if show {
+            if let (Some(normal), Some(modified)) = (
+                self.debug_mesh_material_normal.clone(),
+                self.debug_mesh_material_modified.clone(),
+            ) {
+                if let Some(mesh) =
+                    create_debug_mesh(&self.cloud, &FxHashSet::default(), normal, modified)
+                {
+                    self.debug_mesh_inst
+                        .set_deferred("mesh".into(), mesh.to_variant());
+                }
+            }
+        } else {
+            self.debug_mesh_inst.set("mesh".into(), Variant::nil());
+        }
     }
 }
 
 #[godot_api]
 impl INode3D for PointCloudVisualizer {
     fn init(base: Base<Node3D>) -> Self {
+        const DEFAULT_GRID_SIZE: f32 = 1.0;
         Self {
             base,
             debug_mesh_material_normal: None,
             debug_mesh_material_modified: None,
             show_debug_mesh: false,
             debug_mesh_inst: MeshInstance3D::new_alloc(),
-            cloud: vrrop_server::PointCloud::new(1.0),
+            cloud: vrrop_server::PointCloud::new(DEFAULT_GRID_SIZE),
             meshes: FxHashMap::default(),
+            grid_size: DEFAULT_GRID_SIZE,
             material: None,
         }
     }

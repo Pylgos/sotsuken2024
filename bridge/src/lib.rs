@@ -1,12 +1,9 @@
-use packed_struct::prelude::*;
-use packed_struct::types::bits::ByteArray;
-use std::io::{self, Read, Write};
+// これ使えばよくね？？？？？ https://github.com/LukaOber/serialmessage-rs
+
+use std::io::{BufRead, Write};
 use thiserror::Error;
 
-mod msg;
-pub use msg::Message;
-
-const BUF_SIZE: usize = 256;
+const DEFAULT_BUF_SIZE: usize = 256;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -16,45 +13,59 @@ pub enum Error {
     BufferOverflow,
     #[error("invalid message")]
     InvalidMessage,
-    #[error("packing error")]
-    PackingError(#[from] packed_struct::PackingError),
 }
 
-pub struct Bridge<Reader: Read, Writer: Write> {
-    reader: io::BufReader<Reader>,
+pub struct Bridge<Reader, Writer> {
+    reader: Reader,
     writer: Writer,
     synced: bool,
 }
 
 const CRC: crc::Crc<u16> = crc::Crc::<u16>::new(&crc::CRC_16_XMODEM);
 
-impl<Reader: Read, Writer: Write> Bridge<Reader, Writer> {
-    pub fn new(reader: Reader, writer: Writer) -> Self {
+impl<R: BufRead, W: Write> Bridge<R, W> {
+    pub fn new(reader: R, writer: W) -> Self {
         Self {
-            reader: io::BufReader::with_capacity(BUF_SIZE, reader),
+            reader: reader,
             writer,
             synced: true,
         }
     }
 
-    fn write_bytes(&mut self, data: &[u8]) -> Result<(), Error> {
-        let mut encoded_data = [0u8; BUF_SIZE];
-        let mut to_encode = [0u8; BUF_SIZE];
-        if BUF_SIZE < data.len() + 2 {
+    pub fn send_with_custom_buffer(
+        &mut self,
+        data: &[u8],
+        buf_a: &mut [u8],
+        buf_b: &mut [u8],
+    ) -> Result<(), Error> {
+        let encoded_data = buf_a;
+        let to_encode = buf_b;
+        if encoded_data.len().min(to_encode.len()) < data.len() + 2 {
             return Err(Error::BufferOverflow);
         }
         let crc = CRC.checksum(data);
         to_encode[..data.len()].copy_from_slice(data);
         to_encode[data.len()] = (crc & 0xff) as u8;
         to_encode[data.len() + 1] = (crc >> 8) as u8;
-        let encoded_len = cobs::try_encode(&to_encode[..data.len() + 2], &mut encoded_data)
+        let encoded_len = cobs::try_encode(&to_encode[..data.len() + 2], encoded_data)
             .map_err(|_| Error::BufferOverflow)?;
         self.writer.write_all(&encoded_data[..encoded_len])?;
         self.writer.write_all(&[0])?;
         Ok(())
     }
 
-    fn read_bytes(&mut self, dest: &mut [u8]) -> Result<usize, Error> {
+    pub fn send(&mut self, data: &[u8]) -> Result<(), Error> {
+        let mut buf_a = [0u8; DEFAULT_BUF_SIZE];
+        let mut buf_b = [0u8; DEFAULT_BUF_SIZE];
+        self.send_with_custom_buffer(data, &mut buf_a, &mut buf_b)
+    }
+
+    pub fn recv_with_custom_buffer(
+        &mut self,
+        dest: &mut [u8],
+        buf_a: &mut [u8],
+        buf_b: &mut [u8],
+    ) -> Result<usize, Error> {
         if !self.synced {
             loop {
                 let mut b = [0u8; 1];
@@ -65,7 +76,7 @@ impl<Reader: Read, Writer: Write> Bridge<Reader, Writer> {
                 }
             }
         }
-        let mut read_buf = [0u8; BUF_SIZE];
+        let read_buf = buf_a;
         let mut read_len = 0;
         loop {
             if read_len >= read_buf.len() {
@@ -79,9 +90,9 @@ impl<Reader: Read, Writer: Write> Bridge<Reader, Writer> {
                 break;
             }
         }
-        let mut decode_buf = [0u8; BUF_SIZE];
-        let decoded_len = cobs::decode(&read_buf[..read_len], &mut decode_buf)
-            .map_err(|_| Error::InvalidMessage)?;
+        let decode_buf = buf_b;
+        let decoded_len =
+            cobs::decode(&read_buf[..read_len], decode_buf).map_err(|_| Error::InvalidMessage)?;
         if decoded_len < 2 {
             return Err(Error::InvalidMessage);
         }
@@ -95,24 +106,24 @@ impl<Reader: Read, Writer: Write> Bridge<Reader, Writer> {
         Ok(decoded_len - 2)
     }
 
-    pub fn write(&mut self, msg: &Message) -> Result<(), Error> {
-        let packed = msg.pack()?;
-        self.write_bytes(packed.as_bytes_slice())?;
-        Ok(())
-    }
-
-    pub fn read(&mut self) -> Result<Message, Error> {
-        let mut buf = <Message as PackedStruct>::ByteArray::new(0);
-        self.read_bytes(buf.as_mut_bytes_slice())?;
-        Ok(Message::unpack(&buf)?)
+    pub fn recv(&mut self, dest: &mut [u8]) -> Result<usize, Error> {
+        let mut buf_a = [0u8; DEFAULT_BUF_SIZE];
+        let mut buf_b = [0u8; DEFAULT_BUF_SIZE];
+        self.recv_with_custom_buffer(dest, &mut buf_a, &mut buf_b)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::{cell::RefCell, collections::VecDeque, rc::Rc};
+    use std::{cell::RefCell, collections::VecDeque, io, rc::Rc};
 
-    use crate::{Bridge, Message};
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    pub struct Message {
+        pub forward_vel: f32,
+        pub turn_vel: f32,
+    }
 
     #[derive(Debug, Clone)]
     struct TestBuffer {
@@ -158,15 +169,18 @@ mod test {
     #[test]
     fn test() {
         let buf = TestBuffer::new([]);
-        let mut bridge = Bridge::new(buf.clone(), buf.clone());
+        let mut bridge = Bridge::new(io::BufReader::new(buf.clone()), buf.clone());
         {
-            let send = Message {
-                forward_vel: 100,
-                turn_vel: 100,
+            let msg = Message {
+                forward_vel: 100.0,
+                turn_vel: 100.0,
             };
-            bridge.write(&send).unwrap();
-            let recv = bridge.read().unwrap();
-            assert_eq!(send, recv);
+            let serialized = bincode::serialize(&msg).unwrap();
+            bridge.send(&serialized).unwrap();
+            let mut buf = [0u8; 256];
+            let recv_len = bridge.recv(&mut buf).unwrap();
+            let deserialized: Message = bincode::deserialize(&buf[..recv_len]).unwrap();
+            assert_eq!(msg, deserialized);
         }
     }
 }

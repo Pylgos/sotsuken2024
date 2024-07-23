@@ -1,20 +1,21 @@
-[gd_scene load_steps=11 format=3 uid="uid://bypd5k6iiao8m"]
+[gd_scene load_steps=13 format=3 uid="uid://bypd5k6iiao8m"]
 
+[ext_resource type="PackedScene" uid="uid://cs36x6rbbkhyq" path="res://ui.tscn" id="1_8oqeh"]
 [ext_resource type="Script" path="res://addons/debug_camera/scripts/DebugCamera3D.gd" id="2_ea4aw"]
 [ext_resource type="Script" path="res://visualizer.gd" id="2_oj8io"]
+[ext_resource type="Script" path="res://ui.gd" id="2_w705w"]
 [ext_resource type="Script" path="res://view_pyramid.gd" id="3_k0oo7"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lq1od"]
+albedo_color = Color(0, 1, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7xnas"]
+albedo_color = Color(0, 0, 1, 1)
 
 [sub_resource type="PrismMesh" id="PrismMesh_eh7i8"]
 size = Vector3(0.1, 0.1, 0.1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0bn7c"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8eqxl"]
-transparency = 1
-albedo_color = Color(0, 1, 0, 0.498039)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3rste"]
-albedo_color = Color(1, 1, 0, 1)
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_3ldv6"]
 
@@ -30,9 +31,42 @@ sky = SubResource("Sky_h0j5w")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 0, 0, 0)
 
-[node name="Visualizer" type="MeshInstance3D" parent="."]
+[node name="UI" parent="." instance=ExtResource("1_8oqeh")]
+script = ExtResource("2_w705w")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResetPointCloudButton" type="Button" parent="UI/VBoxContainer"]
+layout_mode = 2
+text = "Clear all points"
+
+[node name="GridSizeLabel" type="Label" parent="UI/VBoxContainer"]
+layout_mode = 2
+text = "Grid Size: "
+
+[node name="GridSizeSlider" type="HSlider" parent="UI/VBoxContainer"]
+layout_mode = 2
+min_value = 0.1
+max_value = 2.0
+step = 0.1
+value = 1.0
+
+[node name="ShowGridButton" type="CheckButton" parent="UI/VBoxContainer"]
+layout_mode = 2
+text = "Show Grid"
+
+[node name="Visualizer" type="Node3D" parent="." node_paths=PackedStringArray("ui")]
 transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
 script = ExtResource("2_oj8io")
+cloud_debug_material_normal = SubResource("StandardMaterial3D_lq1od")
+cloud_debug_material_modified = SubResource("StandardMaterial3D_7xnas")
+ui = NodePath("../UI")
 
 [node name="CameraMarker" type="Node3D" parent="Visualizer"]
 
@@ -52,11 +86,6 @@ script = ExtResource("3_k0oo7")
 material = SubResource("StandardMaterial3D_0bn7c")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Visualizer/CameraMarker/Node3D2"]
-
-[node name="PointCloudVisualizer" type="PointCloudVisualizer" parent="Visualizer"]
-debug_mesh_material_normal = SubResource("StandardMaterial3D_8eqxl")
-debug_mesh_material_modified = SubResource("StandardMaterial3D_3rste")
-show_debug_mesh = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_mmpcl")

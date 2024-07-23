@@ -142,10 +142,11 @@ impl PointCloud {
                     color_projector.point_to_pixel(point.position),
                     depth_projector.point_to_pixel(point.position),
                 ) {
-                    // let orig_depth = depth_projector.point_depth(point.position);
+                    let orig_depth = depth_projector.point_depth(point.position);
                     let depth = image_msg.depth.get_pixel(depth_pixel.x, depth_pixel.y)[0] as f32
                         * image_msg.depth_unit;
-                    if depth != 0.0 {
+                    let remove = depth > orig_depth - 0.5;
+                    if remove {
                         modified = true;
                         points.swap_remove(i);
                         continue;
