@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::{collections::HashSet, time::Duration};
 
 use anyhow::{Context as _, Result};
-use gst::prelude::*;
+use gst::{prelude::*, Structure};
 use gstreamer as gst;
 use gstreamer_app as gst_app;
 use gstreamer_video as gst_video;
@@ -215,6 +215,19 @@ async fn main() -> Result<()> {
         &rtph264pay,
         &udpsink,
     ])?;
+
+    tokio::spawn(async move {
+        let mut prev_bytes_served = 0;
+        loop {
+            let bytes_served: u64 = udpsink.property("bytes-served");
+            println!(
+                "bytes served: {} kB/s",
+                (bytes_served - prev_bytes_served) as f64 / 1000.0
+            );
+            prev_bytes_served = bytes_served;
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+    });
 
     let bus = pipeline.bus().unwrap();
     pipeline.set_state(gst::State::Playing)?;
