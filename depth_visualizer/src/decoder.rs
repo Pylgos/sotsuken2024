@@ -1,3 +1,7 @@
+use std::fs::File;
+use std::io::Write;
+use std::time::UNIX_EPOCH;
+
 use anyhow::Result;
 use gst::glib::prelude::*;
 use gst::prelude::*;
@@ -53,6 +57,7 @@ impl VideoDecoder {
 
         let (sender, receiver) = tokio::sync::mpsc::channel::<VideoFrame>(10);
 
+        let mut f = File::create("latency.csv")?;
         appsink.set_callbacks(
             gst_app::AppSinkCallbacks::builder()
                 .new_sample(move |appsink| {
@@ -72,6 +77,20 @@ impl VideoDecoder {
                         })?;
 
                     let buffer = sample.buffer_owned().unwrap();
+                    let time = buffer.pts().unwrap() + appsink.base_time().unwrap();
+                    let now = appsink.clock().unwrap().time().unwrap();
+                    let delay = now - time;
+                    println!("time: {time} now: {now} delay {delay}");
+                    writeln!(
+                        f,
+                        "{},{}",
+                        std::time::SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs_f64(),
+                        delay.seconds_f64()
+                    )
+                    .unwrap();
                     let _ = sender.try_send(VideoFrame { info, buffer });
                     Ok(gst::FlowSuccess::Ok)
                 })

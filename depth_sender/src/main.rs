@@ -1,9 +1,10 @@
 use std::str::FromStr;
+use std::time::UNIX_EPOCH;
 use std::{collections::HashSet, time::Duration};
 
 use anyhow::{Context as _, Result};
 use gst::{prelude::*, Structure};
-use gstreamer as gst;
+use gstreamer::{self as gst, ClockTime, PadProbeReturn, PadProbeType};
 use gstreamer_app as gst_app;
 use gstreamer_video as gst_video;
 use realsense_rust as rs;
@@ -12,6 +13,8 @@ use rs::{
     kind::{Rs2CameraInfo, Rs2Format, Rs2ProductLine, Rs2StreamKind},
     pipeline::InactivePipeline,
 };
+use std::fs::File;
+use std::io::Write;
 
 const WIDTH: u32 = 640;
 const HEIGHT: u32 = 480;
@@ -37,7 +40,6 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
         _ => unreachable!(),
     };
 
-    // RGB値を8ビット整数に変換します。
     let r = (r * 255.0).round() as u8;
     let g = (g * 255.0).round() as u8;
     let b = (b * 255.0).round() as u8;
@@ -197,6 +199,7 @@ async fn main() -> Result<()> {
         .property("port", 5000)
         .build()?;
     let pipeline = gst::Pipeline::default();
+    pipeline.use_clock(Some(&gst::SystemClock::obtain()));
     pipeline.add_many([
         &src.element(),
         &videoconvert,
@@ -216,16 +219,55 @@ async fn main() -> Result<()> {
         &udpsink,
     ])?;
 
+    let _udpsink_probe =
+        udpsink
+            .static_pad("sink")
+            .unwrap()
+            .add_probe(PadProbeType::BUFFER, move |pad, info| {
+                let Some(buffer) = info.buffer() else {
+                    println!("no buffer");
+                    return PadProbeReturn::Ok;
+                };
+                let Some(pts) = buffer.pts() else {
+                    println!("no pts");
+                    return PadProbeReturn::Ok;
+                };
+                let elem = pad.parent_element().unwrap();
+                let base_time = elem.base_time().unwrap();
+                let now = elem.clock().unwrap().time().unwrap();
+                let real_pts = pts - ClockTime::from_seconds(60 * 60 * 1000);
+                let stamp = real_pts + base_time;
+                println!(
+                    "udpsink pts: {stamp} now: {now} delay: {}",
+                    now.saturating_sub(stamp)
+                );
+                PadProbeReturn::Ok
+            });
+
     tokio::spawn(async move {
+        let mut f = File::create("net_tx.csv").unwrap();
         let mut prev_bytes_served = 0;
+        let mut prev_time = tokio::time::Instant::now();
         loop {
+            let now = tokio::time::Instant::now();
+            let elapsed = now - prev_time;
             let bytes_served: u64 = udpsink.property("bytes-served");
-            println!(
-                "bytes served: {} kB/s",
-                (bytes_served - prev_bytes_served) as f64 / 1000.0
-            );
+            let kilobytes_per_sec =
+                (bytes_served - prev_bytes_served) as f64 / elapsed.as_secs_f64() / 1000.0;
+            println!("bytes served: {} kB/s", kilobytes_per_sec);
+            writeln!(
+                f,
+                "{},{}",
+                std::time::SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs_f64(),
+                kilobytes_per_sec
+            )
+            .unwrap();
             prev_bytes_served = bytes_served;
-            tokio::time::sleep(Duration::from_secs(1)).await;
+            prev_time = now;
+            tokio::time::sleep(Duration::from_millis(1000 / 10)).await;
         }
     });
 
