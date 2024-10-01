@@ -1,7 +1,7 @@
 {
   inputs = {
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:nixos/nixpkgs/24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
     rtabmap-src = {
       url = "github:Pylgos/rtabmap/cpp20";
       flake = false;
@@ -25,10 +25,11 @@
       {
         devShells.default =
           (pkgs.mkShell.override (_: {
-            stdenv = pkgs.gcc13Stdenv;
+            stdenv = pkgs.clangStdenv;
           }))
             {
               nativeBuildInputs = [
+                pkgs.godot_4
                 pkgs.meson
                 pkgs.pkg-config
                 pkgs.cmake
@@ -43,7 +44,7 @@
             propagatedBuildInputs = oldAttrs.buildInputs ++ [ selfPackages.librealsense ];
           });
           librealsense = (
-            pkgs.librealsense.overrideAttrs (oldAttrs: {
+            pkgs.librealsense-gui.overrideAttrs (oldAttrs: {
               version = "2.55.1";
               src = pkgs.fetchFromGitHub {
                 owner = "IntelRealSense";
