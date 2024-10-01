@@ -1,3 +1,4 @@
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 // pub mod control {
@@ -17,6 +18,6 @@ impl ControlCommand {
     }
 
     pub fn deserialize(data: &[u8]) -> Result<ControlCommand> {
-        bincode::deserialize(data)
+        Ok(bincode::deserialize(data)?)
     }
 }

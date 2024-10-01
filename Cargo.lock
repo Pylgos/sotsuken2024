@@ -1945,6 +1945,7 @@ dependencies = [
 name = "vrrop_control_common"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "bincode",
  "serde",
 ]
