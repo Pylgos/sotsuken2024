@@ -1,19 +1,29 @@
 [workspace]
 resolver = "2"
 members = [
-  "bridge", "godot_vrrop_server/rust",
-  "vrrop_client", "vrrop_common", "vrrop_server",
+  "bridge",
+  "godot_vrrop_server/rust",
+  "vrrop_client",
+  "vrrop_common",
+  "vrrop_server",
+  "vrrop_control_common",
+  "vrrop_control_server",
 ]
 
 [workspace.dependencies]
 vrrop_common = { path = "vrrop_common" }
 vrrop_server = { path = "vrrop_server" }
+vrrop_control_common = { path = "vrrop_control_common" }
+vrrop_control_server = { path = "vrrop_control_server" }
 
 anyhow = "1"
+tonic = "0.12.3"
 bincode = "1.3.3"
 futures = "0.3.30"
 fxhash = "0.2.1"
-godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-threads"] }
+godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = [
+  "experimental-threads",
+] }
 image = "0.25.1"
 nalgebra = "0.32.6"
 packed_struct = "0.10"
@@ -23,3 +33,5 @@ tokio = { version = "1.38.0", features = ["full"] }
 tokio-util = "0.7.11"
 tokio-tungstenite = "0.23.1"
 tracing = "0.1.40"
+prost = "0.13.3"
+tonic-build = { version = "0.12.3", features = ["prost"] }

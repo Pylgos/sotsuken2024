@@ -1,0 +1,9 @@
+[package]
+name = "vrrop_control_common"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+serde.workspace = true
+bincode.workspace = true

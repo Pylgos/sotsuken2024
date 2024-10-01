@@ -34,6 +34,7 @@
                 pkgs.pkg-config
                 pkgs.cmake
                 pkgs.llvmPackages.clang-unwrapped.lib
+                pkgs.protobuf
               ];
               buildInputs = [ selfPackages.rtabmap ];
               LIBCLANG_PATH = "${pkgs.llvmPackages.clang-unwrapped.lib}/lib";
