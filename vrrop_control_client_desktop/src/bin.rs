@@ -244,7 +244,6 @@ fn gamepad_event_loop(state: Arc<SharedState>) -> Result<()> {
                 _ => {}
             }
             if Some(event.id) == state.selected_gamepad.lock().as_ref().map(|(id, _)| *id) {
-                println!("{event:?}");
                 let mut gamepad_state = state.gamepad_state.lock();
                 match event.event {
                     AxisChanged(axis, value, _) => match axis {
