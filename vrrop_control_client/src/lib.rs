@@ -13,7 +13,7 @@ impl Client {
         Ok(Self { socket })
     }
 
-    async fn sent_message(&self, message: &ControlMessage) -> Result<()> {
+    pub async fn send_message(&self, message: &ControlMessage) -> Result<()> {
         let bytes = message.serialize();
         let bytes_sent = self.socket.send(&bytes).await?;
         if bytes_sent != bytes.len() {
@@ -27,7 +27,7 @@ impl Client {
     }
 
     pub async fn set_target_velocity(&self, target_velocity: SetTargetVelocity) -> Result<()> {
-        self.sent_message(&ControlMessage::SetTargetVelocity(target_velocity))
+        self.send_message(&ControlMessage::SetTargetVelocity(target_velocity))
             .await
     }
 }

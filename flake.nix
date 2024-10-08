@@ -25,14 +25,13 @@
       {
         devShells.default =
           (pkgs.mkShell.override (_: {
-            stdenv = pkgs.clangStdenv;
+            stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;
           }))
             rec {
               buildInputs = [
                 pkgs.cmake
                 pkgs.godot_4
                 pkgs.libGL
-                pkgs.xorg.libX11
                 pkgs.libxkbcommon
                 pkgs.llvmPackages.clang-unwrapped.lib
                 pkgs.meson
@@ -40,6 +39,7 @@
                 pkgs.protobuf
                 pkgs.wayland
                 pkgs.wayland-protocols
+                pkgs.xorg.libX11
                 pkgs.xorg.libXcursor
                 pkgs.xorg.libXi
                 pkgs.xorg.libXrandr

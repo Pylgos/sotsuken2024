@@ -15,3 +15,5 @@ eframe.workspace = true
 gilrs.workspace = true
 serde.workspace = true
 tokio.workspace = true
+once_cell.workspace = true
+futures.workspace = true

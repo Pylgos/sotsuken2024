@@ -21,7 +21,6 @@ impl ControlMessage {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SetTargetVelocity {
-    pub vx: f32,
-    pub vy: f32,
-    pub vtheta: f32,
+    pub forward: f32,
+    pub turn: f32,
 }

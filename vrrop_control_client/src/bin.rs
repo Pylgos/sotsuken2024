@@ -12,9 +12,8 @@ async fn main() -> Result<()> {
         loop {
             client
                 .set_target_velocity(SetTargetVelocity {
-                    vx: 1.0,
-                    vy: 2.0,
-                    vtheta: 3.0,
+                    forward: 1.0,
+                    turn: 2.0,
                 })
                 .await
                 .unwrap();
