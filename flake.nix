@@ -27,16 +27,25 @@
           (pkgs.mkShell.override (_: {
             stdenv = pkgs.clangStdenv;
           }))
-            {
-              nativeBuildInputs = [
+            rec {
+              buildInputs = [
+                pkgs.cmake
                 pkgs.godot_4
+                pkgs.libGL
+                pkgs.xorg.libX11
+                pkgs.libxkbcommon
+                pkgs.llvmPackages.clang-unwrapped.lib
                 pkgs.meson
                 pkgs.pkg-config
-                pkgs.cmake
-                pkgs.llvmPackages.clang-unwrapped.lib
                 pkgs.protobuf
+                pkgs.wayland
+                pkgs.wayland-protocols
+                pkgs.xorg.libXcursor
+                pkgs.xorg.libXi
+                pkgs.xorg.libXrandr
+                selfPackages.rtabmap
               ];
-              buildInputs = [ selfPackages.rtabmap ];
+              LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
               LIBCLANG_PATH = "${pkgs.llvmPackages.clang-unwrapped.lib}/lib";
             };
         packages = {
