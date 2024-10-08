@@ -1,7 +1,7 @@
+use godot::classes::RefCounted;
 use godot::engine::WeakRef;
 use godot::global::weakref;
 use godot::prelude::*;
-use godot::classes::RefCounted;
 
 use crate::{SharedGd, TOKIO_RUNTIME};
 
@@ -61,7 +61,10 @@ pub struct ImagesMessage {
 
 impl ImagesMessage {
     fn new_gd(inner: vrrop_server::ImagesMessage) -> Gd<Self> {
-        Gd::from_init_fn(|base| Self { base, inner: Some(inner) })
+        Gd::from_init_fn(|base| Self {
+            base,
+            inner: Some(inner),
+        })
     }
 }
 
@@ -96,6 +99,9 @@ impl OdometryMessage {
 
 impl OdometryMessage {
     fn new_gd(inner: vrrop_server::OdometryMessage) -> Gd<Self> {
-        Gd::from_init_fn(|base| Self { base, inner: Some(inner) })
+        Gd::from_init_fn(|base| Self {
+            base,
+            inner: Some(inner),
+        })
     }
 }

@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OdometryMessage {
     pub stamp: std::time::SystemTime,
@@ -27,4 +26,3 @@ pub struct CameraIntrinsics {
     pub cx: f32,
     pub cy: f32,
 }
-

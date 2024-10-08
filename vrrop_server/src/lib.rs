@@ -2,17 +2,17 @@ use anyhow::Result;
 use futures::{StreamExt, TryStreamExt};
 use image::{ImageBuffer, Luma, Rgb};
 use nalgebra::{Quaternion, UnitQuaternion, Vector3, Vector4};
-use vrrop_common::CameraIntrinsics;
 use std::sync::Arc;
 use tokio::{
     net::{TcpListener, UdpSocket},
     sync::broadcast,
     task::JoinHandle,
 };
+use vrrop_common::CameraIntrinsics;
 
 mod pointcloud;
-pub use pointcloud::PointCloud;
 pub use pointcloud::GridIndex;
+pub use pointcloud::PointCloud;
 
 #[derive(Debug, Clone)]
 pub enum ServerMessage {}
@@ -176,4 +176,3 @@ impl Server {
         })
     }
 }
-

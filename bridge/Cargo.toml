@@ -11,4 +11,3 @@ thiserror = "1.0"
 [dev-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 bincode.workspace = true
-

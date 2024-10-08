@@ -8,6 +8,8 @@ members = [
   "vrrop_server",
   "vrrop_control_common",
   "vrrop_control_server",
+  "vrrop_control_client",
+  "vrrop_control_client_desktop",
 ]
 
 [workspace.dependencies]
@@ -15,15 +17,19 @@ vrrop_common = { path = "vrrop_common" }
 vrrop_server = { path = "vrrop_server" }
 vrrop_control_common = { path = "vrrop_control_common" }
 vrrop_control_server = { path = "vrrop_control_server" }
+vrrop_control_client = { path = "vrrop_control_client" }
+vrrop_control_client_desktop = { path = "vrrop_control_client_desktop" }
 
 anyhow = "1"
 tonic = "0.12.3"
 bincode = "1.3.3"
+eframe = "0.29.1"
 futures = "0.3.30"
 fxhash = "0.2.1"
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = [
   "experimental-threads",
 ] }
+gilrs = "0.11.0"
 image = "0.25.1"
 nalgebra = "0.32.6"
 packed_struct = "0.10"

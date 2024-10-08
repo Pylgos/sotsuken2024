@@ -1,4 +1,3 @@
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 // pub mod control {
@@ -6,18 +5,23 @@ use serde::{Deserialize, Serialize};
 // }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ControlCommand {
-    pub vx: f32,
-    pub vy: f32,
-    pub vtheta: f32,
+pub enum ControlMessage {
+    SetTargetVelocity(SetTargetVelocity),
 }
 
-impl ControlCommand {
+impl ControlMessage {
     pub fn serialize(&self) -> Vec<u8> {
         bincode::serialize(self).unwrap()
     }
 
-    pub fn deserialize(data: &[u8]) -> Result<ControlCommand> {
-        Ok(bincode::deserialize(data)?)
+    pub fn deserialize(data: &[u8]) -> Result<Self, bincode::Error> {
+        bincode::deserialize(data)
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SetTargetVelocity {
+    pub vx: f32,
+    pub vy: f32,
+    pub vtheta: f32,
 }

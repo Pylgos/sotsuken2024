@@ -1,0 +1,17 @@
+[package]
+name = "vrrop_control_client_desktop"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "vrrop_control_client_desktop"
+path = "src/bin.rs"
+
+[dependencies]
+vrrop_control_client.workspace = true
+
+anyhow.workspace = true
+eframe.workspace = true
+gilrs.workspace = true
+serde.workspace = true
+tokio.workspace = true

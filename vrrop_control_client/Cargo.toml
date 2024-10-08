@@ -1,0 +1,21 @@
+[package]
+name = "vrrop_control_client"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "vrrop_control_client"
+path = "src/lib.rs"
+
+[[bin]]
+name = "vrrop_control_client"
+path = "src/bin.rs"
+
+
+[dependencies]
+vrrop_control_common.workspace = true
+
+anyhow.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true

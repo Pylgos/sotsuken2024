@@ -43,9 +43,9 @@ impl<T: Primitive> From<NonNull<slam_core_image_t>> for ImageData<T> {
     fn from(image: NonNull<slam_core_image_t>) -> Self {
         unsafe {
             Self {
-                data: NonNull::new(std::mem::transmute::<*mut c_void, *mut T>(slam_core_image_get_data(
-                    image.as_ptr(),
-                )))
+                data: NonNull::new(std::mem::transmute::<*mut c_void, *mut T>(
+                    slam_core_image_get_data(image.as_ptr()),
+                ))
                 .unwrap(),
                 len: slam_core_image_get_size(image.as_ptr()),
                 inner: image,
@@ -113,7 +113,13 @@ impl<'a> SlamCore<'a> {
         let inner = unsafe { slam_core_create() };
         let mut color_intrinsics = MaybeUninit::uninit();
         let mut depth_intrinsics = MaybeUninit::uninit();
-        unsafe { slam_core_get_intrinstics(inner, color_intrinsics.as_mut_ptr(), depth_intrinsics.as_mut_ptr()) }
+        unsafe {
+            slam_core_get_intrinstics(
+                inner,
+                color_intrinsics.as_mut_ptr(),
+                depth_intrinsics.as_mut_ptr(),
+            )
+        }
         Self {
             inner,
             callback: None,
@@ -141,7 +147,6 @@ impl<'a> SlamCore<'a> {
         &self.depth_intrinsics
     }
 }
-
 
 impl<'a> Drop for SlamCore<'a> {
     fn drop(&mut self) {
