@@ -1,7 +1,8 @@
-[gd_scene load_steps=10 format=3 uid="uid://fhneq6mqnwas"]
+[gd_scene load_steps=11 format=3 uid="uid://fhneq6mqnwas"]
 
 [ext_resource type="Script" path="res://xr_main.gd" id="1_rr8o4"]
 [ext_resource type="Script" path="res://visualizer.gd" id="1_w6j6j"]
+[ext_resource type="PackedScene" uid="uid://cs36x6rbbkhyq" path="res://ui.tscn" id="2_4d2v4"]
 [ext_resource type="Script" path="res://view_pyramid.gd" id="3_evk1a"]
 [ext_resource type="Script" path="res://xr_origin.gd" id="4_mckb6"]
 
@@ -25,9 +26,12 @@ script = ExtResource("1_rr8o4")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 0, 0, 0)
 
-[node name="Visualizer" type="MeshInstance3D" parent="."]
+[node name="Ui" parent="." instance=ExtResource("2_4d2v4")]
+
+[node name="Visualizer" type="MeshInstance3D" parent="." node_paths=PackedStringArray("ui")]
 transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
 script = ExtResource("1_w6j6j")
+ui = NodePath("../Ui")
 
 [node name="CameraMarker" type="Node3D" parent="Visualizer"]
 

@@ -1,7 +1,37 @@
-[gd_scene format=3 uid="uid://cs36x6rbbkhyq"]
+[gd_scene load_steps=2 format=3 uid="uid://cs36x6rbbkhyq"]
 
-[node name="Control" type="Control"]
+[ext_resource type="Script" path="res://ui.gd" id="1_dksdn"]
+
+[node name="Ui" type="Control"]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 153.0
 offset_bottom = 192.0
+script = ExtResource("1_dksdn")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResetPointCloudButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Clear all points"
+
+[node name="GridSizeLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Grid Size: "
+
+[node name="GridSizeSlider" type="HSlider" parent="VBoxContainer"]
+layout_mode = 2
+min_value = 0.1
+max_value = 2.0
+step = 0.1
+value = 1.0
+
+[node name="ShowGridButton" type="CheckButton" parent="VBoxContainer"]
+layout_mode = 2
+text = "Show Grid"
