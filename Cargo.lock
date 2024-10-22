@@ -1863,6 +1863,7 @@ dependencies = [
  "nalgebra",
  "tokio",
  "vrrop_common",
+ "vrrop_control_client",
  "vrrop_server",
 ]
 

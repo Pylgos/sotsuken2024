@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use godot::classes::RefCounted;
 use godot::engine::WeakRef;
 use godot::global::weakref;
@@ -103,5 +105,38 @@ impl OdometryMessage {
             base,
             inner: Some(inner),
         })
+    }
+}
+
+#[derive(GodotClass)]
+#[class(init, base=RefCounted)]
+pub struct VrropControlClient {
+    base: Base<RefCounted>,
+    inner: Option<Arc<vrrop_control_client::Client>>,
+}
+
+#[godot_api]
+impl VrropControlClient {
+    #[func]
+    fn connect(&mut self, address: String) {
+        let _enter = TOKIO_RUNTIME.get().unwrap().enter();
+        let client = tokio::runtime::Handle::current()
+            .block_on(vrrop_control_client::Client::new(&address))
+            .unwrap();
+        self.inner = Some(Arc::new(client));
+    }
+
+    #[func]
+    fn set_target_velocity(&self, forward: f64, turn: f64) {
+        let client = self.inner.as_ref().unwrap().clone();
+        TOKIO_RUNTIME.get().unwrap().spawn(async move {
+            client
+                .set_target_velocity(vrrop_control_client::SetTargetVelocity {
+                    forward: forward as f32,
+                    turn: turn as f32,
+                })
+                .await
+                .unwrap();
+        });
     }
 }

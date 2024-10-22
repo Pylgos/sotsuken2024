@@ -9,6 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 vrrop_common.workspace = true
 vrrop_server.workspace = true
+vrrop_control_client.workspace = true
 
 anyhow.workspace = true
 fxhash.workspace = true
