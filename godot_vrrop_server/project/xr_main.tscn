@@ -1,10 +1,14 @@
-[gd_scene load_steps=11 format=3 uid="uid://fhneq6mqnwas"]
+[gd_scene load_steps=15 format=3 uid="uid://fhneq6mqnwas"]
 
 [ext_resource type="Script" path="res://xr_main.gd" id="1_rr8o4"]
 [ext_resource type="Script" path="res://visualizer.gd" id="1_w6j6j"]
 [ext_resource type="PackedScene" uid="uid://cs36x6rbbkhyq" path="res://ui.tscn" id="2_4d2v4"]
 [ext_resource type="Script" path="res://view_pyramid.gd" id="3_evk1a"]
 [ext_resource type="Script" path="res://xr_origin.gd" id="4_mckb6"]
+[ext_resource type="PackedScene" uid="uid://clujaf3u776a3" path="res://addons/godot-xr-tools/objects/viewport_2d_in_3d.tscn" id="5_bh62h"]
+[ext_resource type="PackedScene" uid="uid://b4kad2kuba1yn" path="res://addons/godot-xr-tools/hands/scenes/lowpoly/left_hand_low.tscn" id="7_2yih5"]
+[ext_resource type="PackedScene" uid="uid://cqhw276realc" path="res://addons/godot-xr-tools/functions/function_pointer.tscn" id="7_aic4n"]
+[ext_resource type="PackedScene" uid="uid://l2n30mpbkdyw" path="res://addons/godot-xr-tools/hands/scenes/lowpoly/right_hand_low.tscn" id="8_fsmts"]
 
 [sub_resource type="PrismMesh" id="PrismMesh_eh7i8"]
 size = Vector3(0.1, 0.1, 0.1)
@@ -26,12 +30,9 @@ script = ExtResource("1_rr8o4")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 0, 0, 0)
 
-[node name="Ui" parent="." instance=ExtResource("2_4d2v4")]
-
-[node name="Visualizer" type="MeshInstance3D" parent="." node_paths=PackedStringArray("ui")]
+[node name="Visualizer" type="MeshInstance3D" parent="."]
 transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
 script = ExtResource("1_w6j6j")
-ui = NodePath("../Ui")
 
 [node name="CameraMarker" type="Node3D" parent="Visualizer"]
 
@@ -59,9 +60,24 @@ current = true
 script = ExtResource("4_mckb6")
 
 [node name="Left" type="XRController3D" parent="XROrigin3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 0)
 tracker = &"left_hand"
 
+[node name="Viewport2Din3D" parent="XROrigin3D/Left" instance=ExtResource("5_bh62h")]
+transform = Transform3D(-4.37114e-08, 0, 1, -1, -4.37114e-08, -4.37114e-08, 4.37114e-08, -1, 1.91069e-15, 0.0205706, -0.070742, 0.235342)
+screen_size = Vector2(0.25, 0.25)
+scene = ExtResource("2_4d2v4")
+viewport_size = Vector2(150, 150)
+scene_properties_keys = PackedStringArray("ui.gd")
+
+[node name="LeftHand" parent="XROrigin3D/Left" instance=ExtResource("7_2yih5")]
+
 [node name="Right" type="XRController3D" parent="XROrigin3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0, 0)
 tracker = &"right_hand"
+
+[node name="RightHand" parent="XROrigin3D/Right" instance=ExtResource("8_fsmts")]
+
+[node name="FunctionPointer" parent="XROrigin3D" instance=ExtResource("7_aic4n")]
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]

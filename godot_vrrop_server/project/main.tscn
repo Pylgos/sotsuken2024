@@ -32,12 +32,11 @@ transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 
 
 [node name="Ui" parent="." instance=ExtResource("1_8oqeh")]
 
-[node name="Visualizer" type="Node3D" parent="." node_paths=PackedStringArray("ui")]
+[node name="Visualizer" type="Node3D" parent="."]
 transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
 script = ExtResource("2_oj8io")
 cloud_debug_material_normal = SubResource("StandardMaterial3D_lq1od")
 cloud_debug_material_modified = SubResource("StandardMaterial3D_7xnas")
-ui = NodePath("../Ui")
 
 [node name="CameraMarker" type="Node3D" parent="Visualizer"]
 

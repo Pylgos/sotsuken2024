@@ -1,15 +1,31 @@
 extends Node3D
+class_name Visualizer
 
 @export var cloud_debug_material_normal: Material
 @export var cloud_debug_material_modified: Material
-@export var ui: VrropUi
+@export var show_grid := false:
+	set(value):
+		_visualizer_lock.lock()
+		if _visualizer:
+			_visualizer.show_debug_mesh = value
+		_visualizer_lock.unlock()
+	get:
+		var tmp: bool
+		_visualizer_lock.lock()
+		if _visualizer:
+			tmp = _visualizer.show_debug_mesh
+		else:
+			tmp = false
+		_visualizer_lock.unlock()
+		return tmp
+@export var grid_size := 1.0
 
 @onready var _camera_marker := $CameraMarker
 var _server := VrropServer.new()
 var _visualizer: PointCloudVisualizer
 var _visualizer_lock := Mutex.new()
-var _material = ShaderMaterial.new()
-const _shader = preload("res://point_cloud.gdshader")
+var _material := ShaderMaterial.new()
+const _shader := preload("res://point_cloud.gdshader")
 
 func _init_visualizer():
 	_visualizer_lock.lock()
@@ -21,8 +37,8 @@ func _init_visualizer():
 	vis.material = _material
 	vis.debug_mesh_material_normal = cloud_debug_material_normal
 	vis.debug_mesh_material_modified = cloud_debug_material_modified
-	vis.show_debug_mesh = ui.show_grid
-	vis.grid_size = ui.grid_size
+	vis.show_debug_mesh = show_grid
+	vis.grid_size = grid_size
 	vis.init()
 	add_child(vis)
 
@@ -50,13 +66,5 @@ func _ready():
 			_camera_marker.quaternion = odom.rotation()
 	)
 
-	ui.reset_point_cloud.connect(
-		func():
-			_init_visualizer()
-	)
-	ui.show_grid_changed.connect(
-		func():
-			_visualizer_lock.lock()
-			_visualizer.show_debug_mesh = ui.show_grid
-			_visualizer_lock.unlock()
-	)
+func reset_point_cloud() -> void:
+	_init_visualizer()
