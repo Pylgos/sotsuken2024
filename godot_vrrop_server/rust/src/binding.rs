@@ -118,25 +118,32 @@ pub struct VrropControlClient {
 #[godot_api]
 impl VrropControlClient {
     #[func]
-    fn connect(&mut self, address: String) {
+    fn connect_to_server(&mut self, address: String) -> godot::global::Error {
         let _enter = TOKIO_RUNTIME.get().unwrap().enter();
-        let client = tokio::runtime::Handle::current()
-            .block_on(vrrop_control_client::Client::new(&address))
-            .unwrap();
-        self.inner = Some(Arc::new(client));
+        let client_result =
+            tokio::runtime::Handle::current().block_on(vrrop_control_client::Client::new(&address));
+        match client_result {
+            Ok(client) => {
+                self.inner = Some(Arc::new(client));
+                godot::global::Error::OK
+            }
+            Err(e) => {
+                godot_print!("Error connecting to server: {:?}", e);
+                godot::global::Error::ERR_CANT_CONNECT
+            }
+        }
     }
 
     #[func]
     fn set_target_velocity(&self, forward: f64, turn: f64) {
         let client = self.inner.as_ref().unwrap().clone();
         TOKIO_RUNTIME.get().unwrap().spawn(async move {
-            client
+            let _ = client
                 .set_target_velocity(vrrop_control_client::SetTargetVelocity {
                     forward: forward as f32,
                     turn: turn as f32,
                 })
-                .await
-                .unwrap();
+                .await;
         });
     }
 }

@@ -36,7 +36,3 @@ func _ready():
 	_view_mesh.surface_end()
 	_view_mesh.surface_set_material(0, material)
 	mesh_instance_3d.mesh = _view_mesh
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass

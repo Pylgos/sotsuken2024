@@ -2,7 +2,7 @@ extends Node3D
 
 var xr_interface: XRInterface
 
-@onready var viewport_2d_in_3d = $XROrigin3D/Left/Viewport2Din3D
+@onready var ui_viewport = $XROrigin3D/Left/UiViewport
 @onready var visualizer = $Visualizer
 
 func _ready():
@@ -17,9 +17,9 @@ func _ready():
 		get_viewport().use_xr = true
 	else:
 		print("OpenXR not initialized, please check if your headset is connected")
-	
-	var ui: VrropUi = viewport_2d_in_3d.get_scene_instance()
-	
+
+	var ui: VrropUi = ui_viewport.get_scene_instance()
+
 	ui.grid_size_changed.connect(
 		func():
 			visualizer.grid_size = ui.grid_size

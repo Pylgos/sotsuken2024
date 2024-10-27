@@ -33,6 +33,8 @@ transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 
 [node name="Visualizer" type="MeshInstance3D" parent="."]
 transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
 script = ExtResource("1_w6j6j")
+show_grid = null
+grid_size = null
 
 [node name="CameraMarker" type="Node3D" parent="Visualizer"]
 
@@ -63,11 +65,11 @@ script = ExtResource("4_mckb6")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 0)
 tracker = &"left_hand"
 
-[node name="Viewport2Din3D" parent="XROrigin3D/Left" instance=ExtResource("5_bh62h")]
-transform = Transform3D(-4.37114e-08, 0, 1, -1, -4.37114e-08, -4.37114e-08, 4.37114e-08, -1, 1.91069e-15, 0.0205706, -0.070742, 0.235342)
-screen_size = Vector2(0.25, 0.25)
+[node name="UiViewport" parent="XROrigin3D/Left" instance=ExtResource("5_bh62h")]
+transform = Transform3D(-4.37114e-08, 0, 1, -1, -4.37114e-08, -4.37114e-08, 4.37114e-08, -1, 1.91069e-15, 0.0288257, -0.070742, 0.0869231)
+screen_size = Vector2(0.2, 0.2)
 scene = ExtResource("2_4d2v4")
-viewport_size = Vector2(150, 150)
+viewport_size = Vector2(200, 200)
 scene_properties_keys = PackedStringArray("ui.gd")
 
 [node name="LeftHand" parent="XROrigin3D/Left" instance=ExtResource("7_2yih5")]
@@ -76,8 +78,13 @@ scene_properties_keys = PackedStringArray("ui.gd")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0, 0)
 tracker = &"right_hand"
 
-[node name="RightHand" parent="XROrigin3D/Right" instance=ExtResource("8_fsmts")]
+[node name="FunctionPointer" parent="XROrigin3D/Right" instance=ExtResource("7_aic4n")]
+show_laser = 2
+laser_length = 1
+show_target = true
+target_radius = 0.005
+suppress_radius = 0.0
 
-[node name="FunctionPointer" parent="XROrigin3D" instance=ExtResource("7_aic4n")]
+[node name="RightHand" parent="XROrigin3D/Right" instance=ExtResource("8_fsmts")]
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
