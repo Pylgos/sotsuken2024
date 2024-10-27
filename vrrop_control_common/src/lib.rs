@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ControlMessage {
     SetTargetVelocity(SetTargetVelocity),
+    SetLegLength(f32),
 }
 
 impl ControlMessage {

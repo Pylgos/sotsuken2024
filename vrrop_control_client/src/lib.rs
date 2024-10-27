@@ -30,4 +30,9 @@ impl Client {
         self.send_message(&ControlMessage::SetTargetVelocity(target_velocity))
             .await
     }
+
+    pub async fn set_leg_length(&self, length: f32) -> Result<()> {
+        self.send_message(&ControlMessage::SetLegLength(length))
+            .await
+    }
 }

@@ -20,17 +20,27 @@ var _did_snap_turn := false
 func _ready():
 	pass
 
+# Base <- XROrigin3D <- XRCamera3D
+# Tr = Tr_o * Tr_c
+# Tr_o = Tr * Tr_c^-1
+func _set_global_hmd_transform(transf: Transform3D) -> void:
+	global_transform = transf * xr_camera_3d.transform.inverse()
+
 func _set_global_hmd_position(global_pos: Vector3) -> void:
-	var hmd_transf := xr_camera_3d.transform
-	global_position += global_pos - global_transform * hmd_transf.origin
+	_set_global_hmd_transform(Transform3D(xr_camera_3d.global_basis, global_pos))
 
 func _set_global_hmd_yaw(yaw: float) -> void:
-	var hmd_transf := XRServer.get_hmd_transform()
-	global_basis = Basis.from_euler(Vector3(0, yaw - hmd_transf.basis.get_euler().y, 0))
+	var euler := xr_camera_3d.basis.get_euler()
+	_set_global_hmd_transform(
+		Transform3D(
+			Basis.from_euler(Vector3(euler.x, yaw, euler.z)),
+			xr_camera_3d.global_position
+		)
+	)
 
 func _process(delta):
 	var enable_control := true
-	var is_move_mode := left.get_float("trigger") > 0.5
+	var is_move_mode := left.get_float("grip") > 0.5
 
 	match camera_mode:
 		CameraMode.FIRST_PERSON:
@@ -59,9 +69,11 @@ func _process(delta):
 					_did_snap_turn = false
 
 	if enable_control:
-		var forward: float = left.get_vector2("primary").y
-		var turn: float = -right.get_vector2("primary").x
+		var forward := left.get_vector2("primary").y
+		var turn := -right.get_vector2("primary").x
+		var leg_length := 1 - left.get_float("trigger")
 		ControlClient.target_velocity = Vector2(forward, turn)
+		ControlClient.leg_length = leg_length
 
 	var hmd_transf := xr_camera_3d.transform
 	var ui_direction := (global_transform * hmd_transf.origin - ui_viewport.global_position).normalized()

@@ -24,6 +24,7 @@ struct App {
 struct GamepadState {
     left_stick_x: f32,
     left_stick_y: f32,
+    left_trigger: f32,
     right_stick_x: f32,
     right_stick_y: f32,
 }
@@ -251,6 +252,7 @@ fn gamepad_event_loop(state: Arc<SharedState>) -> Result<()> {
                         LeftStickY => gamepad_state.left_stick_y = value,
                         RightStickX => gamepad_state.right_stick_x = value,
                         RightStickY => gamepad_state.right_stick_y = value,
+                        LeftZ => gamepad_state.left_trigger = value,
                         _ => {}
                     },
                     _ => {}

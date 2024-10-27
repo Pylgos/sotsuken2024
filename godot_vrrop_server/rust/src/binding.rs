@@ -146,4 +146,12 @@ impl VrropControlClient {
                 .await;
         });
     }
+
+    #[func]
+    fn set_leg_length(&self, length: f64) {
+        let client = self.inner.as_ref().unwrap().clone();
+        TOKIO_RUNTIME.get().unwrap().spawn(async move {
+            let _ = client.set_leg_length(length as _).await;
+        });
+    }
 }
