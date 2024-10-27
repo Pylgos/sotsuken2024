@@ -59,6 +59,7 @@ material = SubResource("StandardMaterial3D_0bn7c")
 environment = SubResource("Environment_mmpcl")
 
 [node name="XROrigin3D" type="XROrigin3D" parent="."]
+physics_interpolation_mode = 1
 current = true
 script = ExtResource("4_mckb6")
 

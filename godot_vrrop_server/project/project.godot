@@ -24,9 +24,12 @@ ControlClient="*res://controller.gd"
 
 import/blender/enabled=false
 
+[physics]
+
+common/physics_interpolation=true
+
 [rendering]
 
-renderer/rendering_method="mobile"
 driver/threads/thread_model=2
 textures/vram_compression/import_etc2_astc=true
 

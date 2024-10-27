@@ -2,6 +2,7 @@ extends Node3D
 
 var xr_interface: XRInterface
 
+@onready var xr_origin_3d = $XROrigin3D
 @onready var ui_viewport = $XROrigin3D/Left/UiViewport
 @onready var visualizer = $Visualizer
 
@@ -27,4 +28,8 @@ func _ready():
 	ui.reset_point_cloud.connect(
 		func():
 			visualizer.reset_point_cloud()
+	)
+	ui.camera_mode_changed.connect(
+		func():
+			xr_origin_3d.camera_mode = ui.camera_mode
 	)
