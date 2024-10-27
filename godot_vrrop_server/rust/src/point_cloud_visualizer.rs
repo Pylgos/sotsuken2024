@@ -111,7 +111,7 @@ fn create_debug_mesh(
         mesh.surface_set_material(surface_count, normal);
         surface_count += 1;
     }
-    if modified_grids.len() > 0 {
+    if !modified_grids.is_empty() {
         mesh.call("surface_begin".into(), &[PrimitiveType::LINES.to_variant()]);
         for grid_index in modified_grids {
             add_cube(&mut mesh, *grid_index);
