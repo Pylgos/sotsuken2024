@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://fhneq6mqnwas"]
+[gd_scene load_steps=16 format=3 uid="uid://fhneq6mqnwas"]
 
 [ext_resource type="Script" path="res://xr_main.gd" id="1_rr8o4"]
 [ext_resource type="Script" path="res://visualizer.gd" id="1_w6j6j"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://b4kad2kuba1yn" path="res://addons/godot-xr-tools/hands/scenes/lowpoly/left_hand_low.tscn" id="7_2yih5"]
 [ext_resource type="PackedScene" uid="uid://cqhw276realc" path="res://addons/godot-xr-tools/functions/function_pointer.tscn" id="7_aic4n"]
 [ext_resource type="PackedScene" uid="uid://l2n30mpbkdyw" path="res://addons/godot-xr-tools/hands/scenes/lowpoly/right_hand_low.tscn" id="8_fsmts"]
+[ext_resource type="Material" uid="uid://bnr8v0xh7npjs" path="res://hand_material.tres" id="8_gs3uu"]
 
 [sub_resource type="PrismMesh" id="PrismMesh_eh7i8"]
 size = Vector3(0.1, 0.1, 0.1)
@@ -73,6 +74,7 @@ viewport_size = Vector2(200, 200)
 scene_properties_keys = PackedStringArray("ui.gd")
 
 [node name="LeftHand" parent="XROrigin3D/Left" instance=ExtResource("7_2yih5")]
+hand_material_override = ExtResource("8_gs3uu")
 
 [node name="Right" type="XRController3D" parent="XROrigin3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0, 0)
@@ -86,5 +88,6 @@ target_radius = 0.005
 suppress_radius = 0.0
 
 [node name="RightHand" parent="XROrigin3D/Right" instance=ExtResource("8_fsmts")]
+hand_material_override = ExtResource("8_gs3uu")
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
