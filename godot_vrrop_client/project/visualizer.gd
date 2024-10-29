@@ -21,7 +21,7 @@ class_name Visualizer
 @export var grid_size := 1.0
 
 @onready var _camera_marker := $CameraMarker
-var _server := VrropServer.new()
+var _client := VrropClient.new()
 var _visualizer: PointCloudVisualizer
 var _visualizer_lock := Mutex.new()
 var _material := ShaderMaterial.new()
@@ -50,8 +50,8 @@ func _init_visualizer():
 func _ready():
 	_material.shader = _shader
 	_init_visualizer()
-	_server.start()
-	_server.images_received.connect(
+	_client.start("127.0.0.1:6677")
+	_client.images_received.connect(
 		func(image: ImagesMessage):
 			WorkerThreadPool.add_task(
 				func():
@@ -60,7 +60,7 @@ func _ready():
 					_visualizer_lock.unlock()
 			)
 	)
-	_server.odometry_received.connect(
+	_client.odometry_received.connect(
 		func(odom: OdometryMessage):
 			_camera_marker.position = odom.translation()
 			_camera_marker.quaternion = odom.rotation()

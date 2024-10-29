@@ -1,5 +1,5 @@
 [package]
-name = "godot_vrrop_server"
+name = "godot_vrrop_client"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 vrrop_common.workspace = true
-vrrop_server.workspace = true
+vrrop_client.workspace = true
 vrrop_control_client.workspace = true
 
 anyhow.workspace = true

@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
   "bridge",
-  "godot_vrrop_server/rust",
+  "godot_vrrop_client/rust",
   "vrrop_client",
   "vrrop_common",
   "vrrop_server",
@@ -15,6 +15,7 @@ members = [
 [workspace.dependencies]
 vrrop_common = { path = "vrrop_common" }
 vrrop_server = { path = "vrrop_server" }
+vrrop_client = { path = "vrrop_client" }
 vrrop_control_common = { path = "vrrop_control_common" }
 vrrop_control_server = { path = "vrrop_control_server" }
 vrrop_control_client = { path = "vrrop_control_client" }
@@ -36,8 +37,8 @@ nalgebra = "0.33.0"
 packed_struct = "0.10"
 serde = { version = "1.0.203", features = ["derive"] }
 thiserror = "1.0"
-tokio = { version = "1.38.0", features = ["full"] }
-tokio-util = "0.7.11"
+tokio = { version = "1.41.0", features = ["full"] }
+tokio-util = "0.7.12"
 tokio-tungstenite = "0.24.0"
 tracing = "0.1.40"
 prost = "0.13.3"

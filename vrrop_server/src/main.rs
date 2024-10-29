@@ -1,17 +1,17 @@
 use anyhow::Result;
 use clap::Parser;
-use client::{Client, ImagesMessage, OdometryMessage};
+use server::{ImagesMessage, OdometryMessage, Server};
 use slam_core::SlamCore;
-use std::{net::SocketAddr, str::FromStr, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
-mod client;
+mod server;
 mod slam_core;
 mod slam_core_sys;
 
 #[derive(clap::Parser)]
 struct Args {
-    #[clap(long, default_value = "127.0.0.1:6677")]
-    host: String,
+    #[clap(long, short, default_value_t = 6677)]
+    port: u16,
     #[clap(long, default_value = "1000")]
     image_interval: u64,
 }
@@ -22,11 +22,11 @@ async fn main() -> Result<()> {
 
     let image_interval = Duration::from_millis(args.image_interval);
 
-    let client = Client::new(SocketAddr::from_str(&args.host)?).await?;
+    let server = Server::new(args.port).await?;
 
     let mut slam_core = SlamCore::new();
-    let image_sender = client.image_sender();
-    let odometry_sender = client.odometry_sender();
+    let image_sender = server.image_sender();
+    let odometry_sender = server.odometry_sender();
     let last_image_send = Arc::new(std::sync::Mutex::new(std::time::SystemTime::now()));
     let color_intrinsics = *slam_core.color_intrinsics();
     let depth_intrinsics = *slam_core.depth_intrinsics();
@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
             translation: ev.translation,
             rotation: ev.rotation,
         };
-        match odometry_sender.try_send(odometry) {
+        match odometry_sender.send(odometry) {
             Ok(_) => {}
             Err(_) => {
                 // eprintln!("odometry message dropped!");
@@ -57,11 +57,11 @@ async fn main() -> Result<()> {
             }
             *guard = stamp;
         }
-        match image_sender.try_send(ImagesMessage {
+        match image_sender.send(ImagesMessage {
             odometry,
-            color: ev.color_image,
+            color: Arc::new(ev.color_image),
             color_intrinsics,
-            depth: ev.depth_image,
+            depth: Arc::new(ev.depth_image),
             depth_intrinsics,
         }) {
             Ok(_) => {}
@@ -72,5 +72,6 @@ async fn main() -> Result<()> {
     });
     tokio::signal::ctrl_c().await?;
     println!("Exiting...");
+    server.shutdown().await?;
     Ok(())
 }

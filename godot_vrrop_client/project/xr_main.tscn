@@ -34,8 +34,6 @@ transform = Transform3D(1, 0, 0, 0, -0.34795, 0.937513, 0, -0.937513, -0.34795, 
 [node name="Visualizer" type="MeshInstance3D" parent="."]
 transform = Transform3D(-8.74228e-08, -1, 4.37114e-08, 1.31134e-07, 4.37114e-08, 1, -1, 8.74228e-08, 1.31134e-07, 0, 0, 0)
 script = ExtResource("1_w6j6j")
-show_grid = null
-grid_size = null
 
 [node name="CameraMarker" type="Node3D" parent="Visualizer"]
 

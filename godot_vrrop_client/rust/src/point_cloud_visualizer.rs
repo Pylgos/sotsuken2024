@@ -3,7 +3,7 @@ use godot::classes::{ImmediateMesh, MeshInstance3D, Node3D};
 use godot::engine::mesh::PrimitiveType;
 use godot::engine::Material;
 use godot::prelude::*;
-use vrrop_server::{GridIndex, PointCloud};
+use vrrop_client::{GridIndex, PointCloud};
 
 use crate::binding::ImagesMessage;
 
@@ -208,7 +208,7 @@ impl INode3D for PointCloudVisualizer {
             debug_mesh_material_modified: None,
             show_debug_mesh: false,
             debug_mesh_inst: MeshInstance3D::new_alloc(),
-            cloud: vrrop_server::PointCloud::new(DEFAULT_GRID_SIZE),
+            cloud: vrrop_client::PointCloud::new(DEFAULT_GRID_SIZE),
             meshes: FxHashMap::default(),
             grid_size: DEFAULT_GRID_SIZE,
             material: None,

@@ -9,13 +9,13 @@ use crate::{SharedGd, TOKIO_RUNTIME};
 
 #[derive(GodotClass)]
 #[class(init, base=RefCounted)]
-pub struct VrropServer {
+pub struct VrropClient {
     base: Base<RefCounted>,
-    pub inner: Option<vrrop_server::Server>,
+    pub inner: Option<vrrop_client::Client>,
 }
 
 #[godot_api]
-impl VrropServer {
+impl VrropClient {
     #[signal]
     fn odometry_received(&self, odometry: Gd<OdometryMessage>);
 
@@ -23,32 +23,35 @@ impl VrropServer {
     fn images_received(&self, images: Gd<ImagesMessage>);
 
     #[func(gd_self)]
-    fn start(mut this: Gd<Self>) {
+    fn start(mut this: Gd<Self>, address: String) {
         let weak1: SharedGd<WeakRef> = SharedGd(weakref(this.to_variant()).to());
         let weak2 = SharedGd(weak1.clone());
 
         let _enter = TOKIO_RUNTIME.get().unwrap().enter();
         let server = tokio::runtime::Handle::current()
-            .block_on(vrrop_server::Server::new(vrrop_server::Callbacks::new(
-                move |odometry| {
-                    // godot_print!("Odometry: {:?}", odometry);
-                    let odometry = OdometryMessage::new_gd(odometry);
-                    let mut strong: Gd<VrropServer> = weak1.get_ref().to();
-                    strong.call_deferred(
-                        "emit_signal".into(),
-                        &["odometry_received".to_variant(), odometry.to_variant()],
-                    );
-                },
-                move |images| {
-                    // godot_print!("Images received");
-                    let images = ImagesMessage::new_gd(images);
-                    let mut strong: Gd<VrropServer> = weak2.get_ref().to();
-                    strong.call_deferred(
-                        "emit_signal".into(),
-                        &["images_received".to_variant(), images.to_variant()],
-                    );
-                },
-            )))
+            .block_on(vrrop_client::Client::new(
+                address,
+                vrrop_client::Callbacks::new(
+                    move |odometry| {
+                        // godot_print!("Odometry: {:?}", odometry);
+                        let odometry = OdometryMessage::new_gd(odometry);
+                        let mut strong: Gd<VrropClient> = weak1.get_ref().to();
+                        strong.call_deferred(
+                            "emit_signal".into(),
+                            &["odometry_received".to_variant(), odometry.to_variant()],
+                        );
+                    },
+                    move |images| {
+                        // godot_print!("Images received");
+                        let images = ImagesMessage::new_gd(images);
+                        let mut strong: Gd<VrropClient> = weak2.get_ref().to();
+                        strong.call_deferred(
+                            "emit_signal".into(),
+                            &["images_received".to_variant(), images.to_variant()],
+                        );
+                    },
+                ),
+            ))
             .unwrap();
         this.bind_mut().inner = Some(server);
     }
@@ -58,11 +61,11 @@ impl VrropServer {
 #[class(init, base=RefCounted)]
 pub struct ImagesMessage {
     base: Base<RefCounted>,
-    pub inner: Option<vrrop_server::ImagesMessage>,
+    pub inner: Option<vrrop_client::ImagesMessage>,
 }
 
 impl ImagesMessage {
-    fn new_gd(inner: vrrop_server::ImagesMessage) -> Gd<Self> {
+    fn new_gd(inner: vrrop_client::ImagesMessage) -> Gd<Self> {
         Gd::from_init_fn(|base| Self {
             base,
             inner: Some(inner),
@@ -74,7 +77,7 @@ impl ImagesMessage {
 #[class(init, base=RefCounted)]
 pub struct OdometryMessage {
     base: Base<RefCounted>,
-    pub inner: Option<vrrop_server::OdometryMessage>,
+    pub inner: Option<vrrop_client::OdometryMessage>,
 }
 
 #[godot_api]
@@ -100,7 +103,7 @@ impl OdometryMessage {
 }
 
 impl OdometryMessage {
-    fn new_gd(inner: vrrop_server::OdometryMessage) -> Gd<Self> {
+    fn new_gd(inner: vrrop_client::OdometryMessage) -> Gd<Self> {
         Gd::from_init_fn(|base| Self {
             base,
             inner: Some(inner),

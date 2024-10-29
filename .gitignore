@@ -1,7 +1,7 @@
 /target
 .vscode
 .godot
-/godot_vrrop_server/project/android
+/godot_vrrop_client/project/android
 .cache
 
 vgcore.*

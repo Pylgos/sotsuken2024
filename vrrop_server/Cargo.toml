@@ -2,27 +2,22 @@
 name = "vrrop_server"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
-[lib]
-name = "vrrop_server"
-path = "src/lib.rs"
-
-[[bin]]
-name = "vrrop_server"
-path = "src/bin.rs"
-
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 vrrop_common.workspace = true
-
 anyhow.workspace = true
 bincode.workspace = true
 futures.workspace = true
-fxhash.workspace = true
-image.workspace = true
-nalgebra.workspace = true
-serde.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true
-rayon = "1.10.0"
+tokio-util.workspace = true
+image.workspace = true
+nalgebra.workspace = true
 clap = { version = "4.5.8", features = ["derive"] }
+
+[build-dependencies]
+cmake = "0.1"
+bindgen = "0.70.1"
