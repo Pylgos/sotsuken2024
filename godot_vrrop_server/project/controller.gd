@@ -1,6 +1,7 @@
 extends Node
 
-@export var address := "127.0.0.1:23456"
+#@export var address := "127.0.0.1:23456"
+@export var address := "10.133.1.190:23456"
 
 var target_velocity := Vector2.ZERO
 var leg_length := 1.0
