@@ -25,7 +25,7 @@ struct MyExtension;
 unsafe impl ExtensionLibrary for MyExtension {
     fn on_level_init(level: InitLevel) {
         if level == InitLevel::Core {
-            godot_print!("Loading VRROP server extension...");
+            godot_print!("Loading VRROP client extension...");
             let runtime = tokio::runtime::Runtime::new().unwrap();
             TOKIO_RUNTIME.set(runtime).unwrap();
         }
