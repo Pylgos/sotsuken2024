@@ -1,12 +1,14 @@
 use anyhow::{anyhow, bail, Context, Result};
+use futures::SinkExt;
 use futures::{never::Never, StreamExt, TryStreamExt};
 use image::{ImageBuffer, Luma, Rgb};
 use nalgebra::{Quaternion, UnitQuaternion, Vector3, Vector4};
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::net::{lookup_host, ToSocketAddrs};
+use tokio::sync::mpsc;
 use tokio::{net::UdpSocket, select, task::JoinHandle, time::sleep};
 use tokio_util::sync::CancellationToken;
-use vrrop_common::CameraIntrinsics;
+use vrrop_common::{CameraIntrinsics, Command};
 
 mod pointcloud;
 pub use pointcloud::GridIndex;
@@ -52,6 +54,7 @@ impl Callbacks {
 pub struct Client {
     connect_loop: JoinHandle<()>,
     cancel: CancellationToken,
+    command_sender: mpsc::UnboundedSender<Command>,
 }
 
 async fn decode_images_message(compressed: vrrop_common::ImagesMessage) -> Result<ImagesMessage> {
@@ -90,6 +93,7 @@ async fn connect(
     target: SocketAddr,
     callbacks: Arc<Callbacks>,
     cancel: CancellationToken,
+    command_receiver: &mut mpsc::UnboundedReceiver<Command>,
 ) -> Result<()> {
     let udp_sock = Arc::new(UdpSocket::bind("0.0.0.0:0").await?);
     udp_sock.connect(target).await?;
@@ -97,7 +101,7 @@ async fn connect(
     let url = format!("ws://{}", target);
     let ws_stream = tokio_tungstenite::connect_async(&url).await?.0;
     println!("Connected to {}", url);
-    let (_ws_writer, ws_reader) = ws_stream.split();
+    let (mut ws_writer, ws_reader) = ws_stream.split();
 
     let ws_read_loop = tokio::spawn({
         let callbacks = Arc::clone(&callbacks);
@@ -166,6 +170,20 @@ async fn connect(
                 }
             }
         }
+        res = command_receiver.recv() => {
+            match res {
+                Some(command) => {
+                    ws_writer.send(tokio_tungstenite::tungstenite::Message::binary(bincode::serialize(&command)?)).await?;
+                    Ok(())
+                }
+                None => {
+                    ws_read_abort_handle.abort();
+                    udp_recv_abort_handle.abort();
+                    udp_send_abort_handle.abort();
+                    Ok(())
+                }
+            }
+        }
         _ = cancel.cancelled() => {
             ws_read_abort_handle.abort();
             udp_recv_abort_handle.abort();
@@ -183,12 +201,20 @@ impl Client {
             .context("Failed to resolve host")?;
         let callbacks = Arc::new(callbacks);
         let cancel = CancellationToken::new();
+        let (command_sender, mut command_receiver) = mpsc::unbounded_channel();
 
         let connect_loop = tokio::spawn({
             let cancel = cancel.clone();
             async move {
                 loop {
-                    match connect(target, Arc::clone(&callbacks), cancel.clone()).await {
+                    match connect(
+                        target,
+                        Arc::clone(&callbacks),
+                        cancel.clone(),
+                        &mut command_receiver,
+                    )
+                    .await
+                    {
                         Ok(_) => return,
                         Err(e) => {
                             eprintln!("Error: {:?}", e);
@@ -202,7 +228,12 @@ impl Client {
         Ok(Self {
             connect_loop,
             cancel,
+            command_sender,
         })
+    }
+
+    pub fn send_command(&self, command: Command) {
+        self.command_sender.send(command).unwrap();
     }
 
     pub async fn shutdown(self) {

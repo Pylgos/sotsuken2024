@@ -55,6 +55,12 @@ impl VrropClient {
             .unwrap();
         this.bind_mut().inner = Some(server);
     }
+
+    #[func]
+    fn send_reset_command(&self) {
+        let client = self.inner.as_ref().unwrap();
+        client.send_command(vrrop_common::Command::Reset);
+    }
 }
 
 #[derive(GodotClass)]

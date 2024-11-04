@@ -1,8 +1,11 @@
 use anyhow::Result;
 use clap::Parser;
-use server::{ImagesMessage, OdometryMessage, Server};
+use server::{Callbacks, ImagesMessage, OdometryMessage, Server};
 use slam_core::SlamCore;
 use std::{sync::Arc, time::Duration};
+use tokio::select;
+use tokio::sync::mpsc;
+use vrrop_common::Command;
 
 mod server;
 mod slam_core;
@@ -16,14 +19,7 @@ struct Args {
     image_interval: u64,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let args = Args::parse();
-
-    let image_interval = Duration::from_millis(args.image_interval);
-
-    let server = Server::new(args.port).await?;
-
+fn init_slam_core<'a>(server: &Server, image_interval: Duration) -> Result<SlamCore<'a>> {
     let mut slam_core = SlamCore::new();
     let image_sender = server.image_sender();
     let odometry_sender = server.odometry_sender();
@@ -70,7 +66,46 @@ async fn main() -> Result<()> {
             }
         };
     });
-    tokio::signal::ctrl_c().await?;
+    Ok(slam_core)
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let args = Args::parse();
+
+    let image_interval = Duration::from_millis(args.image_interval);
+
+    let (command_sender, mut command_receiver) = mpsc::unbounded_channel();
+    let server = Server::new(
+        args.port,
+        Callbacks {
+            on_command: Box::new(move |command| {
+                command_sender.send(command).unwrap();
+            }),
+        },
+    )
+    .await?;
+    let mut slam_core: Option<SlamCore> = None;
+    slam_core.replace(init_slam_core(&server, image_interval)?);
+    loop {
+        select! {
+            command = command_receiver.recv() => {
+                match command {
+                    Some(Command::Reset) => {
+                        println!("Resetting SLAM core...");
+                        slam_core.replace(init_slam_core(&server, image_interval)?);
+                    }
+                    None => {
+                        break;
+                    }
+                }
+            }
+            _ = tokio::signal::ctrl_c() => {
+                break;
+            }
+
+        }
+    }
     println!("Exiting...");
     server.shutdown().await?;
     Ok(())

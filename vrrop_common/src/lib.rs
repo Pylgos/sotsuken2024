@@ -26,3 +26,8 @@ pub struct CameraIntrinsics {
     pub cx: f32,
     pub cy: f32,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Command {
+    Reset,
+}
