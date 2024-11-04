@@ -19,6 +19,11 @@ class_name Visualizer
 		_visualizer_lock.unlock()
 		return tmp
 @export var grid_size := 1.0
+@export var show_camera_marker := true:
+	set(value):
+		_camera_marker.visible = value
+	get:
+		return _camera_marker.visible
 
 @onready var _camera_marker := $CameraMarker
 var _client := VrropClient.new()

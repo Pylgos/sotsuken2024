@@ -1,11 +1,16 @@
 extends XROrigin3D
 
 enum CameraMode {
-	FIRST_PERSON,
 	THIRD_PERSON,
+	FIRST_PERSON,
 }
 
-@export var camera_mode := CameraMode.FIRST_PERSON
+@export var camera_mode := CameraMode.THIRD_PERSON:
+	set(value):
+		if value == CameraMode.THIRD_PERSON:
+			_move_to_third_person_default_pose()
+		camera_mode = value
+
 @export var snap_turn_threshold := 0.5
 @export var snap_turn_step := 0.5
 
@@ -15,10 +20,8 @@ enum CameraMode {
 @onready var xr_camera_3d: XRCamera3D = $XRCamera3D
 @onready var ui_viewport: Node3D = $Left/UiViewport
 
+var _position_reset := false
 var _did_snap_turn := false
-
-func _ready():
-	pass
 
 # Base <- XROrigin3D <- XRCamera3D
 # Tr = Tr_o * Tr_c
@@ -38,7 +41,16 @@ func _set_global_hmd_yaw(yaw: float) -> void:
 		)
 	)
 
-func _process(delta):
+func _move_to_third_person_default_pose() -> void:
+	_set_global_hmd_position(Vector3(0, 1.0, 1.5))
+	_set_global_hmd_yaw(0.0)
+
+func _process(delta: float):
+	if not _position_reset:
+		if xr_camera_3d.transform != Transform3D():
+			_move_to_third_person_default_pose()
+			_position_reset = true
+	
 	var enable_control := true
 	var is_move_mode := left.get_float("grip") > 0.5
 
@@ -57,7 +69,7 @@ func _process(delta):
 				var primary := left.get_vector2("primary")
 				position += (forward_dir * primary.y + right_dir * primary.x) * delta
 			
-				var right_x = right.get_vector2("primary").x
+				var right_x := right.get_vector2("primary").x
 				if not _did_snap_turn:
 					if right_x > snap_turn_threshold:
 						_set_global_hmd_yaw(xr_camera_3d.global_basis.get_euler().y - snap_turn_step)

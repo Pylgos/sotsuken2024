@@ -43,7 +43,6 @@ transform = Transform3D(-4.37114e-08, -4.37114e-08, -1, -1, -1.31362e-14, 4.3711
 [node name="Mesh" type="MeshInstance3D" parent="Visualizer/CameraMarker"]
 transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 8.05961e-16, -9.28477e-15, 0, 1, 0, 0, 0)
 mesh = SubResource("PrismMesh_eh7i8")
-skeleton = NodePath("../../..")
 
 [node name="Node3D2" type="Node3D" parent="Visualizer/CameraMarker"]
 script = ExtResource("3_evk1a")
@@ -64,22 +63,28 @@ script = ExtResource("4_mckb6")
 [node name="Left" type="XRController3D" parent="XROrigin3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0, 0)
 tracker = &"left_hand"
+pose = &"grip"
 
 [node name="UiViewport" parent="XROrigin3D/Left" instance=ExtResource("5_bh62h")]
-transform = Transform3D(-4.37114e-08, 0, 1, -1, -4.37114e-08, -4.37114e-08, 4.37114e-08, -1, 1.91069e-15, 0.0288257, -0.070742, 0.0869231)
+transform = Transform3D(-4.37114e-08, 0, 1, -1, -4.37114e-08, -4.37114e-08, 4.37114e-08, -1, 1.91069e-15, 0.0565989, -0.0281337, -0.0252427)
 screen_size = Vector2(0.2, 0.2)
 scene = ExtResource("2_4d2v4")
 viewport_size = Vector2(200, 200)
 scene_properties_keys = PackedStringArray("ui.gd")
 
 [node name="LeftHand" parent="XROrigin3D/Left" instance=ExtResource("7_2yih5")]
+visible = false
 hand_material_override = ExtResource("8_gs3uu")
+
+[node name="OpenXRFbRenderModel" type="OpenXRFbRenderModel" parent="XROrigin3D/Left"]
 
 [node name="Right" type="XRController3D" parent="XROrigin3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, 0, 0)
 tracker = &"right_hand"
+pose = &"grip"
 
 [node name="FunctionPointer" parent="XROrigin3D/Right" instance=ExtResource("7_aic4n")]
+transform = Transform3D(0.992323, 0, 0.123671, -0.0874484, 0.707107, 0.701679, -0.0874484, -0.707107, 0.701679, 0, 0.0069609, -0.0069609)
 show_laser = 2
 laser_length = 1
 show_target = true
@@ -87,6 +92,10 @@ target_radius = 0.005
 suppress_radius = 0.0
 
 [node name="RightHand" parent="XROrigin3D/Right" instance=ExtResource("8_fsmts")]
+visible = false
 hand_material_override = ExtResource("8_gs3uu")
+
+[node name="OpenXRFbRenderModel" type="OpenXRFbRenderModel" parent="XROrigin3D/Right"]
+render_model_type = 1
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]

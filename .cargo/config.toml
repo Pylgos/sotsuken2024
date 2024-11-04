@@ -1,3 +1,0 @@
-[target.aarch64-linux-android]
-ar = "/opt/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-linker = "/opt/android-sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang"
