@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3 uid="uid://0cdks8r1na8p"]
+
+[sub_resource type="GDScript" id="GDScript_f6geo"]
+script/source = "extends Node
+
+func _input(event):
+	if event is InputEventKey && event.keycode == GlobalSettings.dialog_key.get_value().get_keycode_with_modifiers():
+		show_settings()
+
+#Note that SEAL doesn't care how or when this is called, pressing the escape button is just an example.
+func show_settings():
+	var settings_dialog_scene = preload(\"res://addons/SEAL/visualizers/SettingsDialog.tscn\")
+	var settings_dialog:ConfirmationDialog = settings_dialog_scene.instantiate()
+	settings_dialog.title = \"Global settings\"
+	add_child(settings_dialog)
+	
+	settings_dialog.get_node(\"SettingsPanel\").settings_collection = GlobalSettings
+	settings_dialog.popup_centered()
+"
+
+[node name="Main" type="Node"]
+script = SubResource("GDScript_f6geo")

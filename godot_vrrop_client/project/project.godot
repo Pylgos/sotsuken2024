@@ -19,6 +19,14 @@ run/main_scene.xr="res://xr_main.tscn"
 [autoload]
 
 ControlClient="*res://controller.gd"
+GlobalClient="*res://client.gd"
+Log="*res://addons/logger/logger.gd"
+SEAL="*res://addons/SEAL/SEAL.gd"
+GlobalSettings="*res://settings.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/SEAL/plugin.cfg", "res://addons/logger/plugin.cfg")
 
 [filesystem]
 

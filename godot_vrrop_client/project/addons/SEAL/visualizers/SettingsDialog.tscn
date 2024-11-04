@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://ckte3ujuk4lhf"]
+
+[ext_resource type="Theme" uid="uid://ch7cischb5kn8" path="res://addons/SEAL/visualizers/BaseTheme.res" id="1_2a0me"]
+[ext_resource type="PackedScene" uid="uid://bmftyc5y0aned" path="res://addons/SEAL/visualizers/SettingsPanel.tscn" id="1_bx0qr"]
+
+[node name="SettingsDialog" type="ConfirmationDialog"]
+title = "Settings"
+size = Vector2i(400, 400)
+exclusive = false
+theme = ExtResource("1_2a0me")
+ok_button_text = "Accept"
+dialog_close_on_escape = false
+
+[node name="SettingsPanel" parent="." instance=ExtResource("1_bx0qr")]
+margin = 5
+
+[connection signal="confirmed" from="." to="SettingsPanel" method="_resync_settings"]

@@ -1,0 +1,37 @@
+[gd_scene load_steps=3 format=3 uid="uid://dsasijr8tc468"]
+
+[ext_resource type="PackedScene" uid="uid://bh8x54mstorgq" path="res://addons/SEAL/painters/SettingsPainter.tscn" id="1_10oe5"]
+
+[sub_resource type="GDScript" id="1"]
+script/source = "extends SettingsPainter
+
+var _option_button:OptionButton
+
+
+##Method for syncing visuals with proxy value.
+func update_visuals():
+	_option_button = $ValueGroup/OptionButton
+	_option_button.clear()
+	assert(setting is MultiChoiceSetting)
+	for option in setting.allowed_values:
+		_option_button.add_item(tr(option))
+	#We assume button idx align with index in setting.allowed_values, this should be the case since they are added in order.
+	if _proxy_value:
+		_option_button.select(setting.allowed_values.find(_proxy_value))
+	else:
+		_option_button.select(0)
+
+
+func _on_value_changed(idx:int):
+	assert(_option_button.selected >= 0)
+	_proxy_value = setting.allowed_values[idx]
+"
+
+[node name="MultiChoiceSettingsPainter" instance=ExtResource("1_10oe5")]
+script = SubResource("1")
+
+[node name="OptionButton" type="OptionButton" parent="ValueGroup" index="0"]
+layout_mode = 2
+focus_mode = 1
+
+[connection signal="item_selected" from="ValueGroup/OptionButton" to="." method="_on_value_changed"]

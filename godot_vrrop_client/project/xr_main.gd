@@ -3,7 +3,6 @@ extends Node3D
 var xr_interface: XRInterface
 
 @onready var xr_origin_3d = $XROrigin3D
-@onready var ui_viewport = $XROrigin3D/Left/UiViewport
 @onready var visualizer = $Visualizer
 @onready var world_environment = $WorldEnvironment
 
@@ -20,23 +19,27 @@ func _ready():
 	else:
 		print("OpenXR not initialized, please check if your headset is connected")
 
-	var ui: VrropUi = ui_viewport.get_scene_instance()
-
-	ui.grid_size_changed.connect(
-		func():
-			visualizer.grid_size = ui.grid_size
-	)
-	ui.reset_point_cloud.connect(
-		func():
-			visualizer.reset_point_cloud()
-	)
-	ui.camera_mode_changed.connect(
-		func():
-			xr_origin_3d.camera_mode = ui.camera_mode
-			visualizer.show_camera_marker = xr_origin_3d.camera_mode != xr_origin_3d.CameraMode.FIRST_PERSON
-	)
+	GlobalSettings.grid_size.on_setting_changed.connect(_on_grid_size_changed)
+	GlobalSettings.view_type.on_setting_changed.connect(_on_view_type_changed)
 	
+	_on_grid_size_changed()
+	_on_view_type_changed()
+
 	_enable_passthrough(true)
+
+func _on_grid_size_changed() -> void:
+	visualizer.grid_size = GlobalSettings.grid_size.get_value()
+
+func _on_view_type_changed() -> void:
+	match GlobalSettings.view_type.get_value():
+		"First Person":
+			xr_origin_3d.view_type = xr_origin_3d.ViewType.FIRST_PERSON
+			visualizer.show_camera_marker = false
+		"Third Person":
+			xr_origin_3d.view_type = xr_origin_3d.ViewType.THIRD_PERSON
+			visualizer.show_camera_marker = true
+		_:
+			assert(false)
 
 func _enable_passthrough(enable: bool) -> void:
 	var openxr_interface: OpenXRInterface = XRServer.find_interface("OpenXR")

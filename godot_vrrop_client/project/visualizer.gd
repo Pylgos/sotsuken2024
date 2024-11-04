@@ -26,7 +26,6 @@ class_name Visualizer
 		return _camera_marker.visible
 
 @onready var _camera_marker := $CameraMarker
-var _client := VrropClient.new()
 var _visualizer: PointCloudVisualizer
 var _visualizer_lock := Mutex.new()
 var _material := ShaderMaterial.new()
@@ -51,12 +50,12 @@ func _init_visualizer():
 	_visualizer = vis
 	_visualizer_lock.unlock()
 
-# Called when the node enters the scene tree for the first time.
 func _ready():
 	_material.shader = _shader
 	_init_visualizer()
-	_client.start("127.0.0.1:6677")
-	_client.images_received.connect(
+
+func start(client: Client) -> void:
+	client.images_received.connect(
 		func(image: ImagesMessage):
 			WorkerThreadPool.add_task(
 				func():
@@ -65,11 +64,15 @@ func _ready():
 					_visualizer_lock.unlock()
 			)
 	)
-	_client.odometry_received.connect(
+	client.odometry_received.connect(
 		func(odom: OdometryMessage):
 			_camera_marker.position = odom.translation()
 			_camera_marker.quaternion = odom.rotation()
 	)
+	client.reset_command_sent.connect(
+		func():
+			self.reset()
+	)
 
-func reset_point_cloud() -> void:
+func reset() -> void:
 	_init_visualizer()
