@@ -8,6 +8,8 @@ var grid_size := FloatSetting.new("Grid Size", "Visualizer", "Grid size of the v
 var show_grid := BoolSetting.new("Show Grid", "Visualizer", "Whether to display the grid or not", false)
 var view_type := MultiChoiceSetting.new("View Type", "Visualizer", "Type of the View", "Third Person", ["First Person", "Third Person"])
 
+const _PATH = "user://global_settings.gson"
+
 func _init():
 	add_setting(server_address)
 	add_setting(server_port)
@@ -15,5 +17,8 @@ func _init():
 	add_setting(show_grid)
 	add_setting(view_type)
 
+	if FileAccess.file_exists(_PATH):
+		load_from_GSON(_PATH)
+
 func _exit_tree():
-	pass
+	save_to_GSON(_PATH)
