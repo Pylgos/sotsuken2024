@@ -429,7 +429,8 @@ bool CameraRs2D4xx::init(const std::string &calibrationFolder,
   }
 
   depth_stereo_sensor.set_option(rs2_option::RS2_OPTION_EMITTER_ENABLED, false);
-  motion_sensor.set_option(rs2_option::RS2_OPTION_ENABLE_MOTION_CORRECTION, true);
+  motion_sensor.set_option(rs2_option::RS2_OPTION_ENABLE_MOTION_CORRECTION,
+                           true);
   std::vector<rs2::sensor> sensors = {color_sensor, depth_stereo_sensor,
                                       motion_sensor};
 
@@ -699,9 +700,9 @@ SensorData CameraRs2D4xx::captureImage(SensorCaptureInfo *info) {
           ir_frame.get() == nullptr ? frameset.get_infrared_frame() : ir_frame;
       depth_frame = depth_frame.get() == nullptr ? frameset.get_depth_frame()
                                                  : depth_frame;
-      required_frames_arrived = ir_frame.get() != nullptr &&
-                                depth_frame.get() != nullptr &&
-                                color_frame.get() != nullptr;
+      required_frames_arrived =
+          ir_frame.get() != nullptr && depth_frame.get() != nullptr;
+      // color_frame.get() != nullptr;
     } while (!required_frames_arrived && timer.elapsed() < 2.0);
 
     if (required_frames_arrived) {
@@ -730,11 +731,14 @@ SensorData CameraRs2D4xx::captureImage(SensorCaptureInfo *info) {
       cv::Mat ir = cv::Mat(irBuffer_.size(), irBuffer_.type(),
                            (void *)ir_frame.get_data())
                        .clone();
-      cv::Mat color = cv::Mat(rgbBuffer_.size(), rgbBuffer_.type(),
-                              (void *)color_frame.get_data())
-                          .clone();
+      if (color_frame.get() != nullptr) {
+        cv::Mat color = cv::Mat(rgbBuffer_.size(), rgbBuffer_.type(),
+                                (void *)color_frame.get_data())
+                            .clone();
+        prevColor_ = color;
+      }
       data = SensorData(ir, depth, ir_depth_model_, this->getNextSeqID(), stamp,
-                        color);
+                        prevColor_);
 
       IMU imu;
       double imuStamp = stamp * 1000.0;

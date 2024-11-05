@@ -94,6 +94,7 @@ private:
   cv::Mat depthBuffer_;
   cv::Mat irBuffer_;
   cv::Mat rgbBuffer_;
+  cv::Mat prevColor_;
   rtabmap::CameraModel ir_depth_model_;
   rtabmap::CameraModel rgb_model_;
   rtabmap::Transform imuLocalTransform_;

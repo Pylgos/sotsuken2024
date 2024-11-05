@@ -41,8 +41,8 @@ public:
       ULogger::setLevel(ULogger::kWarning);
 
       auto camera = new CameraRs2D4xx{};
-      camera->setColorResolution(640, 480, 60);
-      camera->setIrDepthResolution(640, 480, 60);
+      camera->setColorResolution(960, 540, 60);
+      camera->setIrDepthResolution(640, 480, 90);
       if (!camera->init()) {
         std::cout << "camera initialization failed" << std::endl;
         return nullptr;
@@ -106,6 +106,8 @@ private:
       rtabmap::OdometryEvent *odom_event =
           static_cast<rtabmap::OdometryEvent *>(event);
       if (odometry_callback_ == nullptr)
+        return false;
+      if (odom_event->data().userDataRaw().empty())
         return false;
       slam_core_odometry_event_t ev;
       memset(&ev, 0, sizeof(ev));
