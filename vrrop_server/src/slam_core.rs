@@ -68,14 +68,42 @@ pub struct OdometryEvent {
     pub depth_image: DepthImage,
 }
 
-struct FfiCallback<'a>(Box<dyn Fn(OdometryEvent) + 'a + Send>);
+struct FfiCallback<'a>(Box<Box<dyn Fn(OdometryEvent) + 'a + Send>>);
+struct FfiCallbackRef<'a>(*const Box<dyn Fn(OdometryEvent) + 'a + Send>);
+
+impl<'a> FfiCallback<'a> {
+    fn new<F>(cb: F) -> Self
+    where
+        F: Fn(OdometryEvent) + 'a + Send,
+    {
+        Self(Box::new(Box::new(cb)))
+    }
+
+    fn as_ref(&self) -> FfiCallbackRef<'a> {
+        FfiCallbackRef(self.0.as_ref())
+    }
+}
+
+impl<'a> FfiCallbackRef<'a> {
+    fn as_ptr(&self) -> *mut c_void {
+        unsafe { std::mem::transmute(self.0) }
+    }
+
+    unsafe fn from_ptr(ptr: *const c_void) -> Self {
+        std::mem::transmute(ptr)
+    }
+
+    fn call(&self, ev: OdometryEvent) {
+        unsafe { (*self.0)(ev) }
+    }
+}
 
 unsafe extern "C" fn odometry_event_handler(
     userdata: *mut std::ffi::c_void,
     raw_ev: *const slam_core_odometry_event_t,
 ) {
     let raw_ev = raw_ev.as_ref().unwrap();
-    let cb = &*(userdata as *const FfiCallback<'_>);
+    let cb = FfiCallbackRef::from_ptr(userdata);
     let rust_ev: OdometryEvent = OdometryEvent {
         translation: Vector3::new(
             raw_ev.translation[0],
@@ -105,7 +133,7 @@ unsafe extern "C" fn odometry_event_handler(
             .unwrap()
         },
     };
-    cb.0(rust_ev);
+    cb.call(rust_ev);
 }
 
 impl<'a> SlamCore<'a> {
@@ -129,11 +157,11 @@ impl<'a> SlamCore<'a> {
     }
 
     pub fn register_odometry_event_handler(&mut self, handler: impl Fn(OdometryEvent) + 'a + Send) {
-        self.callback = Some(FfiCallback(Box::new(handler)));
+        self.callback = Some(FfiCallback::new(handler));
         unsafe {
             slam_core_register_odometry_event_handler(
                 self.inner,
-                std::mem::transmute(self.callback.as_ref().unwrap()),
+                self.callback.as_ref().unwrap().as_ref().as_ptr(),
                 Some(odometry_event_handler),
             )
         };
