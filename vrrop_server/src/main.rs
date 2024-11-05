@@ -60,9 +60,7 @@ fn init_slam_core<'a>(server: &Server, image_interval: Duration) -> Result<SlamC
             depth: Arc::new(ev.depth_image),
             depth_intrinsics,
         }) {
-            Ok(_) => {
-                println!("image message sent!");
-            }
+            Ok(_) => {}
             Err(_) => {
                 // eprintln!("image message dropped!");
             }

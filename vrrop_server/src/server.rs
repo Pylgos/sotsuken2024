@@ -262,8 +262,13 @@ async fn encode_images_msssage(msg: &ImagesMessage) -> Result<vrrop_common::Imag
 async fn encode_color(img: Arc<ColorImage>) -> Result<Vec<u8>> {
     tokio::task::spawn_blocking(move || {
         let mut dst = Vec::new();
-        let mut enc = JpegEncoder::new_with_quality(&mut dst, 50);
-        enc.encode_image(img.as_ref())?;
+        let enc = JpegEncoder::new_with_quality(&mut dst, 70);
+        enc.write_image(
+            &img.as_bytes()[..image_size(img.as_ref())],
+            img.width(),
+            img.height(),
+            ExtendedColorType::Rgb8,
+        )?;
         Ok(dst)
     })
     .await?
