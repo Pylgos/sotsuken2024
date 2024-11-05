@@ -27,6 +27,8 @@ func _ready():
 
 	_enable_passthrough(true)
 
+	visualizer.start(GlobalClient)
+
 func _on_grid_size_changed() -> void:
 	visualizer.grid_size = GlobalSettings.grid_size.get_value()
 
