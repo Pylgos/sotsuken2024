@@ -103,7 +103,7 @@ async fn connect(
     println!("Connected to {}", url);
     let (mut ws_writer, ws_reader) = ws_stream.split();
 
-    let ws_read_loop = tokio::spawn({
+    let mut ws_read_loop = tokio::spawn({
         let callbacks = Arc::clone(&callbacks);
         async move {
             ws_reader
@@ -118,7 +118,7 @@ async fn connect(
     });
     let ws_read_abort_handle = ws_read_loop.abort_handle();
 
-    let udp_recv_loop: JoinHandle<Result<Never>> = tokio::spawn({
+    let mut udp_recv_loop: JoinHandle<Result<Never>> = tokio::spawn({
         let udp_sock = Arc::clone(&udp_sock);
         let callbacks = Arc::clone(&callbacks);
         async move {
@@ -132,7 +132,7 @@ async fn connect(
     });
     let udp_recv_abort_handle = udp_recv_loop.abort_handle();
 
-    let udp_send_loop: JoinHandle<Result<Never>> = tokio::spawn({
+    let mut udp_send_loop: JoinHandle<Result<Never>> = tokio::spawn({
         let udp_sock = Arc::clone(&udp_sock);
         async move {
             loop {
@@ -143,54 +143,53 @@ async fn connect(
     });
     let udp_send_abort_handle = udp_send_loop.abort_handle();
 
-    select! {
-        res = ws_read_loop => {
-            match res.unwrap() {
-                Ok(()) => {
-                    bail!("WebSocket connection closed");
-                }
-                Err(e) => {
-                    Err(anyhow!(e).context("Reading Websocket failed"))
-                }
-            }
-        }
-        res = udp_recv_loop => {
-            match res.unwrap() {
-                Ok(a) => match a {},
-                Err(e) => {
-                    Err(e.context("Reading UDP failed"))
+    loop {
+        select! {
+            res = &mut ws_read_loop => {
+                match res.unwrap() {
+                    Ok(()) => {
+                        bail!("WebSocket connection closed");
+                    }
+                    Err(e) => {
+                        return Err(anyhow!(e).context("Reading Websocket failed"))
+                    }
                 }
             }
-        }
-        res = udp_send_loop => {
-            match res.unwrap() {
-                Ok(a) => match a {},
-                Err(e) => {
-                    Err(e.context("Sending UDP failed"))
+            res = &mut udp_recv_loop => {
+                match res.unwrap() {
+                    Ok(a) => match a {},
+                    Err(e) => {
+                        return Err(e.context("Reading UDP failed"))
+                    }
                 }
             }
-        }
-        res = command_receiver.recv() => {
-            match res {
-                Some(command) => {
-                    ws_writer.send(tokio_tungstenite::tungstenite::Message::binary(bincode::serialize(&command)?)).await?;
-                    Ok(())
-                }
-                None => {
-                    ws_read_abort_handle.abort();
-                    udp_recv_abort_handle.abort();
-                    udp_send_abort_handle.abort();
-                    Ok(())
+            res = &mut udp_send_loop => {
+                match res.unwrap() {
+                    Ok(a) => match a {},
+                    Err(e) => {
+                        return Err(e.context("Sending UDP failed"))
+                    }
                 }
             }
-        }
-        _ = cancel.cancelled() => {
-            ws_read_abort_handle.abort();
-            udp_recv_abort_handle.abort();
-            udp_send_abort_handle.abort();
-            Ok(())
+            res = command_receiver.recv() => {
+                match res {
+                    Some(command) => {
+                        ws_writer.send(tokio_tungstenite::tungstenite::Message::binary(bincode::serialize(&command)?)).await?;
+                    }
+                    None => {
+                        break;
+                    }
+                }
+            }
+            _ = cancel.cancelled() => {
+                break;
+            }
         }
     }
+    ws_read_abort_handle.abort();
+    udp_recv_abort_handle.abort();
+    udp_send_abort_handle.abort();
+    Ok(())
 }
 
 impl Client {

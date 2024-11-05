@@ -60,7 +60,9 @@ fn init_slam_core<'a>(server: &Server, image_interval: Duration) -> Result<SlamC
             depth: Arc::new(ev.depth_image),
             depth_intrinsics,
         }) {
-            Ok(_) => {}
+            Ok(_) => {
+                println!("image message sent!");
+            }
             Err(_) => {
                 // eprintln!("image message dropped!");
             }
@@ -93,7 +95,10 @@ async fn main() -> Result<()> {
                 match command {
                     Some(Command::Reset) => {
                         println!("Resetting SLAM core...");
-                        slam_core.replace(init_slam_core(&server, image_interval)?);
+                        // Shutdown the old slam core
+                        drop(slam_core.take());
+                        slam_core = Some(init_slam_core(&server, image_interval)?);
+                        println!("SLAM core reset!");
                     }
                     None => {
                         break;
