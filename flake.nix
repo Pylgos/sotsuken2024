@@ -50,6 +50,7 @@
           buildInputs = [
             pkgs.cmake
             pkgs.godot_4
+            pkgs.jdk17
             pkgs.libGL
             pkgs.libxkbcommon
             pkgs.llvmPackages.clang-unwrapped.lib
@@ -66,24 +67,14 @@
           ];
           LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
           LIBCLANG_PATH = "${pkgs.llvmPackages.clang-unwrapped.lib}/lib";
+          ANDROID_HOME = "${androidPkgs.androidsdk}/libexec/android-sdk";
+          JAVA_HOME = "${pkgs.jdk17}";
+          CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER = "${ANDROID_HOME}/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang";
+          CARGO_TARGET_AARCH64_LINUX_ANDROID_AR = "${ANDROID_HOME}/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar";
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER = "android";
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD = "android";
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH = "res://debug.keystore";
         };
-        devShells.android =
-          let
-            cross = pkgs.pkgsCross.aarch64-android-prebuilt;
-          in
-          mkShell rec {
-            nativeBuildInputs = [
-              pkgs.godot_4
-              pkgs.jdk17
-            ];
-            ANDROID_HOME = "${androidPkgs.androidsdk}/libexec/android-sdk";
-            JAVA_HOME = "${pkgs.jdk17}";
-            CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER = "${ANDROID_HOME}/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang";
-            CARGO_TARGET_AARCH64_LINUX_ANDROID_AR = "${ANDROID_HOME}/ndk-bundle/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar";
-            GODOT_ANDROID_KEYSTORE_DEBUG_USER = "android";
-            GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD = "android";
-            GODOT_ANDROID_KEYSTORE_DEBUG_PATH = "res://debug.keystore";
-          };
         packages = {
           rtabmap = pkgs.rtabmap.overrideAttrs (oldAttrs: {
             src = rtabmap-src;
