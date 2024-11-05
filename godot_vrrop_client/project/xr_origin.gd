@@ -59,8 +59,8 @@ func _process(delta: float):
 		ViewType.FIRST_PERSON:
 			_set_global_hmd_position(camera_marker.global_position)
 			if is_move_mode:
-				var real_camera_euler := camera_marker.global_basis.get_euler()
-				_set_global_hmd_yaw(real_camera_euler.y - PI / 2)
+				var real_camera_dir := -camera_marker.global_basis.x
+				_set_global_hmd_yaw(atan2(real_camera_dir.x, real_camera_dir.z))
 
 		ViewType.THIRD_PERSON:
 			if is_move_mode:
