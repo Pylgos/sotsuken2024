@@ -27,10 +27,8 @@ func _ready():
 	)
 	GlobalSettings.show_grid.on_setting_changed.connect(_on_show_grid_changed)
 	
-	view_type_button.item_selected.connect(
-		func(idx: int):
-			GlobalSettings.view_type.set_value(view_type_button.get_item_text(idx))
-	)
+	view_type_button.item_selected.connect(_on_view_type_item_selected)
+	GlobalSettings.view_type.on_setting_changed.connect(_on_view_type_changed)
 	
 	server_address_edit.text_submitted.connect(
 		func(new_text: String):
@@ -46,6 +44,7 @@ func _ready():
 
 	_on_grid_size_changed()
 	_on_show_grid_changed()
+	_on_view_type_changed()
 	_on_server_address_changed()
 	_on_server_port_changed()
 
@@ -62,3 +61,16 @@ func _on_server_address_changed() -> void:
 
 func _on_server_port_changed() -> void:
 	server_port_edit.text = str(GlobalSettings.server_port.get_value())
+
+func _on_view_type_item_selected(idx: int) -> void:
+	GlobalSettings.view_type.set_value(view_type_button.get_item_text(idx))
+
+func _on_view_type_changed() -> void:
+	var item := -1
+	for idx in range(view_type_button.item_count):
+		if GlobalSettings.view_type.get_value() == view_type_button.get_item_text(idx):
+			item = idx
+	assert(item != -1)
+	view_type_button.item_selected.disconnect(_on_view_type_item_selected)
+	view_type_button.selected = item
+	view_type_button.item_selected.connect(_on_view_type_item_selected)
