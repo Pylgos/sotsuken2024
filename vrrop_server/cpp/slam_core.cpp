@@ -107,8 +107,6 @@ private:
           static_cast<rtabmap::OdometryEvent *>(event);
       if (odometry_callback_ == nullptr)
         return false;
-      if (odom_event->data().userDataRaw().empty())
-        return false;
       slam_core_odometry_event_t ev;
       memset(&ev, 0, sizeof(ev));
       auto pose = odom_event->pose();
@@ -131,8 +129,14 @@ private:
         ev.rotation[2] = q.y();
         ev.rotation[3] = q.z();
       }
-      ev.color = new slam_core_image_t{odom_event->data().userDataRaw()};
-      ev.depth = new slam_core_image_t{odom_event->data().depthRaw()};
+      if (odom_event->data().userDataRaw().empty())
+        ev.color = nullptr;
+      else
+        ev.color = new slam_core_image_t{odom_event->data().userDataRaw()};
+      if (odom_event->data().depthRaw().empty())
+        ev.depth = nullptr;
+      else
+        ev.depth = new slam_core_image_t{odom_event->data().depthRaw()};
       odometry_callback_(&ev);
     }
     return false;

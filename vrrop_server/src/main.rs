@@ -53,18 +53,20 @@ fn init_slam_core<'a>(server: &Server, image_interval: Duration) -> Result<SlamC
             }
             *guard = stamp;
         }
-        match image_sender.send(ImagesMessage {
-            odometry,
-            color: Arc::new(ev.color_image),
-            color_intrinsics,
-            depth: Arc::new(ev.depth_image),
-            depth_intrinsics,
-        }) {
-            Ok(_) => {}
-            Err(_) => {
-                // eprintln!("image message dropped!");
+        if let Some((color, depth)) = ev.color_image.zip(ev.depth_image) {
+            match image_sender.send(ImagesMessage {
+                odometry,
+                color: Arc::new(color),
+                color_intrinsics,
+                depth: Arc::new(depth),
+                depth_intrinsics,
+            }) {
+                Ok(_) => {}
+                Err(_) => {
+                    // eprintln!("image message dropped!");
+                }
             }
-        };
+        }
     });
     Ok(slam_core)
 }

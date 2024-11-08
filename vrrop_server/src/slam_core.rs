@@ -64,8 +64,8 @@ impl<T: Primitive> Drop for ImageData<T> {
 pub struct OdometryEvent {
     pub translation: Vector3<f32>,
     pub rotation: UnitQuaternion<f32>,
-    pub color_image: ColorImage,
-    pub depth_image: DepthImage,
+    pub color_image: Option<ColorImage>,
+    pub depth_image: Option<DepthImage>,
 }
 
 struct FfiCallback<'a>(Box<Box<dyn Fn(OdometryEvent) + 'a + Send>>);
@@ -117,20 +117,32 @@ unsafe extern "C" fn odometry_event_handler(
             raw_ev.rotation[3],
         )),
         color_image: unsafe {
-            ColorImage::from_raw(
-                slam_core_image_get_width(raw_ev.color),
-                slam_core_image_get_height(raw_ev.color),
-                ImageData::from(NonNull::new(raw_ev.color).unwrap()),
-            )
-            .unwrap()
+            if raw_ev.color.is_null() {
+                None
+            } else {
+                Some(
+                    ColorImage::from_raw(
+                        slam_core_image_get_width(raw_ev.color),
+                        slam_core_image_get_height(raw_ev.color),
+                        ImageData::from(NonNull::new(raw_ev.color).unwrap()),
+                    )
+                    .unwrap(),
+                )
+            }
         },
         depth_image: unsafe {
-            DepthImage::from_raw(
-                slam_core_image_get_width(raw_ev.depth),
-                slam_core_image_get_height(raw_ev.depth),
-                ImageData::from(NonNull::new(raw_ev.depth).unwrap()),
-            )
-            .unwrap()
+            if raw_ev.depth.is_null() {
+                None
+            } else {
+                Some(
+                    DepthImage::from_raw(
+                        slam_core_image_get_width(raw_ev.depth),
+                        slam_core_image_get_height(raw_ev.depth),
+                        ImageData::from(NonNull::new(raw_ev.depth).unwrap()),
+                    )
+                    .unwrap(),
+                )
+            }
         },
     };
     cb.call(rust_ev);
