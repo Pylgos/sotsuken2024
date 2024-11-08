@@ -41,8 +41,8 @@ public:
       ULogger::setLevel(ULogger::kWarning);
 
       auto camera = new CameraRs2D4xx{};
-      camera->setColorResolution(960, 540, 60);
-      camera->setIrDepthResolution(640, 480, 90);
+      camera->setColorResolution(640, 480, 60);
+      camera->setIrDepthResolution(640, 480, 60);
       if (!camera->init()) {
         std::cout << "camera initialization failed" << std::endl;
         return nullptr;
