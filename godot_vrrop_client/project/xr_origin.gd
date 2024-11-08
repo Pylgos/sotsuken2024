@@ -5,14 +5,11 @@ enum ViewType {
 	FIRST_PERSON,
 }
 
-@export var view_type := ViewType.THIRD_PERSON:
-	set(value):
-		if value == ViewType.THIRD_PERSON:
-			_move_to_third_person_default_pose()
-		view_type = value
+@export var view_type := ViewType.THIRD_PERSON: set = set_view_type
 
 @export var snap_turn_threshold := 0.5
 @export var snap_turn_step := 0.5
+@export var hmd_position_smoothing_weight := 0.1
 
 @onready var left: XRController3D = $Left
 @onready var right: XRController3D = $Right
@@ -23,6 +20,15 @@ enum ViewType {
 
 var _position_reset := false
 var _did_snap_turn := false
+
+var _current_global_hmd_position := Vector3()
+
+func set_view_type(value: ViewType) -> void:
+	if value == ViewType.THIRD_PERSON:
+		_move_to_third_person_default_pose()
+	elif value == ViewType.FIRST_PERSON:
+		_current_global_hmd_position = camera_marker.global_position
+	view_type = value
 
 # Base <- XROrigin3D <- XRCamera3D
 # Tr = Tr_o * Tr_c
@@ -57,7 +63,8 @@ func _process(delta: float):
 
 	match view_type:
 		ViewType.FIRST_PERSON:
-			_set_global_hmd_position(camera_marker.global_position)
+			_current_global_hmd_position = _current_global_hmd_position.lerp(camera_marker.global_position, hmd_position_smoothing_weight)
+			_set_global_hmd_position(_current_global_hmd_position)
 			if is_move_mode:
 				var real_camera_dir := -camera_marker.global_basis.x
 				_set_global_hmd_yaw(atan2(real_camera_dir.x, real_camera_dir.z))
