@@ -7,3 +7,4 @@
 vgcore.*
 *.apk
 perf.data*
+/stats

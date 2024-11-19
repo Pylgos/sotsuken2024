@@ -30,4 +30,15 @@ pub struct CameraIntrinsics {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Command {
     Reset,
+    SaveStats(Stats),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Stats {
+    pub images_stamps: Vec<std::time::SystemTime>,
+    pub images_original_sizes: Vec<usize>,
+    pub images_latencies: Vec<std::time::Duration>,
+    pub odometry_stamps: Vec<std::time::SystemTime>,
+    pub odometry_original_sizes: Vec<usize>,
+    pub odometry_latencies: Vec<std::time::Duration>,
 }

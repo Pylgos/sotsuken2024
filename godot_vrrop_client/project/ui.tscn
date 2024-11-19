@@ -7,7 +7,7 @@
 layout_mode = 3
 anchors_preset = 0
 offset_right = 240.0
-offset_bottom = 330.0
+offset_bottom = 360.0
 theme = ExtResource("1_78k5h")
 script = ExtResource("1_dksdn")
 
@@ -88,3 +88,8 @@ text = "Server Port"
 [node name="ServerPortEdit" type="LineEdit" parent="Panel/MarginContainer/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="RecordStatsButton" type="Button" parent="Panel/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Start Recording Stats"

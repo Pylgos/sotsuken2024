@@ -2,10 +2,15 @@ use anyhow::Result;
 use clap::Parser;
 use server::{Callbacks, ImagesMessage, OdometryMessage, Server};
 use slam_core::SlamCore;
-use std::{sync::Arc, time::Duration};
+use std::io::Write;
+use std::{
+    path::Path,
+    sync::Arc,
+    time::{Duration, UNIX_EPOCH},
+};
 use tokio::select;
 use tokio::sync::mpsc;
-use vrrop_common::Command;
+use vrrop_common::{Command, Stats};
 
 mod server;
 mod slam_core;
@@ -71,6 +76,45 @@ fn init_slam_core<'a>(server: &Server, image_interval: Duration) -> Result<SlamC
     Ok(slam_core)
 }
 
+fn save_stats(stats: Stats, dir: &Path) -> Result<()> {
+    std::fs::create_dir_all(dir)?;
+    let image_stats_path = dir.join("images.csv");
+    let mut image_stats_dest = std::fs::File::create(image_stats_path)?;
+    writeln!(image_stats_dest, "stamp,size,latency")?;
+    for ((stamp, size), latency) in stats
+        .images_stamps
+        .iter()
+        .zip(stats.images_original_sizes.iter())
+        .zip(stats.images_latencies.iter())
+    {
+        writeln!(
+            image_stats_dest,
+            "{},{},{}",
+            stamp.duration_since(UNIX_EPOCH).unwrap().as_secs_f64(),
+            size,
+            latency.as_secs_f64()
+        )?;
+    }
+    let odometry_stats_path = dir.join("odometry.csv");
+    let mut odometry_stats_dest = std::fs::File::create(odometry_stats_path)?;
+    writeln!(odometry_stats_dest, "stamp,size,latency")?;
+    for ((stamp, size), latency) in stats
+        .odometry_stamps
+        .iter()
+        .zip(stats.odometry_original_sizes.iter())
+        .zip(stats.odometry_latencies.iter())
+    {
+        writeln!(
+            odometry_stats_dest,
+            "{},{},{}",
+            stamp.duration_since(UNIX_EPOCH).unwrap().as_secs_f64(),
+            size,
+            latency.as_secs_f64()
+        )?;
+    }
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -99,6 +143,10 @@ async fn main() -> Result<()> {
                         drop(slam_core.take());
                         slam_core = Some(init_slam_core(&server, image_interval)?);
                         println!("SLAM core reset!");
+                    }
+                    Some(Command::SaveStats(stats)) => {
+                        println!("Saving statistics...");
+                        save_stats(stats, Path::new("stats"))?;
                     }
                     None => {
                         break;

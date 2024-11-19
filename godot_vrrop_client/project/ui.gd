@@ -6,21 +6,22 @@ class_name VrropUi
 @onready var grid_size_slider: Slider = %GridSizeSlider
 @onready var show_grid_button: Button = %ShowGridButton
 @onready var view_type_button: OptionButton = %ViewTypeButton
-@onready var server_address_edit = %ServerAddressEdit
-@onready var server_port_edit = %ServerPortEdit
+@onready var server_address_edit: LineEdit = %ServerAddressEdit
+@onready var server_port_edit: LineEdit = %ServerPortEdit
+@onready var record_stats_button: Button = %RecordStatsButton
 
 func _ready():
 	reset_button.pressed.connect(
 		func():
 			GlobalClient.send_reset_command()
 	)
-	
+
 	grid_size_slider.value_changed.connect(
 		func(new_value: float):
 			GlobalSettings.grid_size.set_value(new_value)
 	)
 	GlobalSettings.grid_size.on_setting_changed.connect(_on_grid_size_changed)
-	
+
 	show_grid_button.pressed.connect(
 		func():
 			GlobalSettings.show_grid.set_value(show_grid_button.button_pressed)
@@ -29,18 +30,27 @@ func _ready():
 	
 	view_type_button.item_selected.connect(_on_view_type_item_selected)
 	GlobalSettings.view_type.on_setting_changed.connect(_on_view_type_changed)
-	
+
 	server_address_edit.text_submitted.connect(
 		func(new_text: String):
 			GlobalSettings.server_address.set_value(new_text)
 	)
 	GlobalSettings.server_address.on_setting_changed.connect(_on_server_address_changed)
-	
+
 	server_port_edit.text_submitted.connect(
 		func(new_text: String):
 			GlobalSettings.server_port.set_value(new_text.to_int())
 	)
 	GlobalSettings.server_port.on_setting_changed.connect(_on_server_port_changed)
+
+	record_stats_button.pressed.connect(
+		func():
+			if GlobalClient.is_stat_recording():
+				GlobalClient.end_stats_recording()
+			else:
+				GlobalClient.start_stats_recording()
+	)
+	GlobalClient.stat_recording_changed.connect(_on_stats_recording_changed)
 
 	_on_grid_size_changed()
 	_on_show_grid_changed()
@@ -74,3 +84,9 @@ func _on_view_type_changed() -> void:
 	view_type_button.item_selected.disconnect(_on_view_type_item_selected)
 	view_type_button.selected = item
 	view_type_button.item_selected.connect(_on_view_type_item_selected)
+
+func _on_stats_recording_changed() -> void:
+	if GlobalClient.is_stat_recording():
+		record_stats_button.text = "Stop Recording Stats"
+	else:
+		record_stats_button.text = "Start Recording Stats"

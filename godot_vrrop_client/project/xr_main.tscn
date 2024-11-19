@@ -72,7 +72,7 @@ pose = &"grip"
 transform = Transform3D(-4.37114e-08, 0, 1, -1, -4.37114e-08, -4.37114e-08, 4.37114e-08, -1, 1.91069e-15, 0.0565989, -0.0281337, -0.0252427)
 screen_size = Vector2(0.12, 0.165)
 scene = ExtResource("2_4d2v4")
-viewport_size = Vector2(240, 330)
+viewport_size = Vector2(240, 360)
 unshaded = true
 scene_properties_keys = PackedStringArray("ui.gd")
 

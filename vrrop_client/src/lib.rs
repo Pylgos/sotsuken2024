@@ -19,6 +19,7 @@ pub enum ServerMessage {}
 
 #[derive(Debug, Copy, Clone)]
 pub struct OdometryMessage {
+    pub original_size: usize,
     pub stamp: std::time::SystemTime,
     pub translation: Vector3<f32>,
     pub rotation: UnitQuaternion<f32>,
@@ -26,6 +27,7 @@ pub struct OdometryMessage {
 
 #[derive(Debug, Clone)]
 pub struct ImagesMessage {
+    pub original_size: usize,
     pub odometry: OdometryMessage,
     pub color: ImageBuffer<Rgb<u8>, Vec<u8>>,
     pub color_intrinsics: CameraIntrinsics,
@@ -57,13 +59,17 @@ pub struct Client {
     command_sender: mpsc::UnboundedSender<Command>,
 }
 
-async fn decode_images_message(compressed: vrrop_common::ImagesMessage) -> Result<ImagesMessage> {
+async fn decode_images_message(
+    compressed: vrrop_common::ImagesMessage,
+    original_size: usize,
+) -> Result<ImagesMessage> {
     let color_image = compressed.color_image;
     let depth_image = compressed.depth_image;
     let color = tokio::task::spawn_blocking(move || image::load_from_memory(&color_image));
     let depth = tokio::task::spawn_blocking(move || image::load_from_memory(&depth_image));
     Ok(ImagesMessage {
-        odometry: decode_odometry_message(compressed.odometry),
+        original_size,
+        odometry: decode_odometry_message(compressed.odometry, 0),
         color: color.await??.to_rgb8(),
         color_intrinsics: compressed.color_intrinsics,
         depth: depth.await??.to_luma16(),
@@ -72,8 +78,12 @@ async fn decode_images_message(compressed: vrrop_common::ImagesMessage) -> Resul
     })
 }
 
-fn decode_odometry_message(raw: vrrop_common::OdometryMessage) -> OdometryMessage {
+fn decode_odometry_message(
+    raw: vrrop_common::OdometryMessage,
+    original_size: usize,
+) -> OdometryMessage {
     OdometryMessage {
+        original_size,
         stamp: raw.stamp,
         translation: Vector3::from_row_slice(&raw.translation),
         rotation: UnitQuaternion::new_normalize(Quaternion::from_vector(Vector4::from_row_slice(
@@ -84,7 +94,7 @@ fn decode_odometry_message(raw: vrrop_common::OdometryMessage) -> OdometryMessag
 
 async fn handle_images_message(data: &[u8], callbacks: &Callbacks) -> Result<()> {
     let compressed = bincode::deserialize::<vrrop_common::ImagesMessage>(data)?;
-    let msg = decode_images_message(compressed).await?;
+    let msg = decode_images_message(compressed, data.len()).await?;
     (callbacks.on_images)(msg);
     Ok(())
 }
@@ -125,7 +135,7 @@ async fn connect(
             loop {
                 let mut data = [0u8; 1024];
                 let n = udp_sock.recv(&mut data).await?;
-                let msg = decode_odometry_message(bincode::deserialize(&data[..n]).unwrap());
+                let msg = decode_odometry_message(bincode::deserialize(&data[..n]).unwrap(), n);
                 (callbacks.on_odometry)(msg);
             }
         }

@@ -61,6 +61,51 @@ impl VrropClient {
         let client = self.inner.as_ref().unwrap();
         client.send_command(vrrop_common::Command::Reset);
     }
+
+    #[func]
+    fn send_save_stats_command(
+        &self,
+        images_stamps: PackedFloat64Array,
+        images_original_sizes: PackedInt64Array,
+        images_latencies: PackedFloat64Array,
+        odometry_stamps: PackedFloat64Array,
+        odometry_original_sizes: PackedInt64Array,
+        odometry_latencies: PackedFloat64Array,
+    ) {
+        let client = self.inner.as_ref().unwrap();
+        client.send_command(vrrop_common::Command::SaveStats(vrrop_common::Stats {
+            images_stamps: images_stamps
+                .as_slice()
+                .iter()
+                .map(|&x| std::time::UNIX_EPOCH + std::time::Duration::from_secs_f64(x))
+                .collect(),
+            images_original_sizes: images_original_sizes
+                .as_slice()
+                .iter()
+                .map(|&x| x as _)
+                .collect(),
+            images_latencies: images_latencies
+                .as_slice()
+                .iter()
+                .map(|&x| std::time::Duration::from_secs_f64(x))
+                .collect(),
+            odometry_stamps: odometry_stamps
+                .as_slice()
+                .iter()
+                .map(|&x| std::time::UNIX_EPOCH + std::time::Duration::from_secs_f64(x))
+                .collect(),
+            odometry_original_sizes: odometry_original_sizes
+                .as_slice()
+                .iter()
+                .map(|&x| x as _)
+                .collect(),
+            odometry_latencies: odometry_latencies
+                .as_slice()
+                .iter()
+                .map(|&x| std::time::Duration::from_secs_f64(x))
+                .collect(),
+        }));
+    }
 }
 
 #[derive(GodotClass)]
@@ -76,6 +121,19 @@ impl ImagesMessage {
             base,
             inner: Some(inner),
         })
+    }
+}
+
+#[godot_api]
+impl ImagesMessage {
+    #[func]
+    fn odometry(&self) -> Gd<OdometryMessage> {
+        OdometryMessage::new_gd(self.inner.as_ref().unwrap().odometry)
+    }
+
+    #[func]
+    fn original_size(&self) -> i64 {
+        self.inner.as_ref().unwrap().original_size as _
     }
 }
 
@@ -105,6 +163,22 @@ impl OdometryMessage {
         } else {
             Quaternion::new(0.0, 0.0, 0.0, 1.0)
         }
+    }
+
+    #[func]
+    fn stamp(&self) -> f64 {
+        self.inner
+            .as_ref()
+            .unwrap()
+            .stamp
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs_f64()
+    }
+
+    #[func]
+    fn original_size(&self) -> i64 {
+        self.inner.as_ref().unwrap().original_size as _
     }
 }
 
