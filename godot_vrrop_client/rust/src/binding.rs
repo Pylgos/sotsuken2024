@@ -63,48 +63,20 @@ impl VrropClient {
     }
 
     #[func]
-    fn send_save_stats_command(
-        &self,
-        images_stamps: PackedFloat64Array,
-        images_original_sizes: PackedInt64Array,
-        images_latencies: PackedFloat64Array,
-        odometry_stamps: PackedFloat64Array,
-        odometry_original_sizes: PackedInt64Array,
-        odometry_latencies: PackedFloat64Array,
-    ) {
+    fn start_recording(&self) {
         let client = self.inner.as_ref().unwrap();
-        client.send_command(vrrop_common::Command::SaveStats(vrrop_common::Stats {
-            images_stamps: images_stamps
-                .as_slice()
-                .iter()
-                .map(|&x| std::time::UNIX_EPOCH + std::time::Duration::from_secs_f64(x))
-                .collect(),
-            images_original_sizes: images_original_sizes
-                .as_slice()
-                .iter()
-                .map(|&x| x as _)
-                .collect(),
-            images_latencies: images_latencies
-                .as_slice()
-                .iter()
-                .map(|&x| std::time::Duration::from_secs_f64(x))
-                .collect(),
-            odometry_stamps: odometry_stamps
-                .as_slice()
-                .iter()
-                .map(|&x| std::time::UNIX_EPOCH + std::time::Duration::from_secs_f64(x))
-                .collect(),
-            odometry_original_sizes: odometry_original_sizes
-                .as_slice()
-                .iter()
-                .map(|&x| x as _)
-                .collect(),
-            odometry_latencies: odometry_latencies
-                .as_slice()
-                .iter()
-                .map(|&x| std::time::Duration::from_secs_f64(x))
-                .collect(),
-        }));
+        client.start_recording();
+    }
+
+    #[func]
+    fn end_recording(&self) {
+        let client = self.inner.as_ref().unwrap();
+        client.end_recording();
+    }
+
+    #[func]
+    fn is_recording(&self) -> bool {
+        self.inner.as_ref().unwrap().is_recording()
     }
 }
 

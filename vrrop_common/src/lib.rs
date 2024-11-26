@@ -1,6 +1,28 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum UdpClientMessage {
+    Ping(PingMessage),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum UdpServerMessage {
+    Odometry(OdometryMessage),
+    Pong(PongMessage),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PingMessage {
+    pub client_time: std::time::SystemTime,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PongMessage {
+    pub client_time: std::time::SystemTime,
+    pub server_time: std::time::SystemTime,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OdometryMessage {
     pub stamp: std::time::SystemTime,
     pub translation: [f32; 3],
@@ -33,12 +55,12 @@ pub enum Command {
     SaveStats(Stats),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Stats {
     pub images_stamps: Vec<std::time::SystemTime>,
     pub images_original_sizes: Vec<usize>,
-    pub images_latencies: Vec<std::time::Duration>,
+    pub images_latencies: Vec<i64>,
     pub odometry_stamps: Vec<std::time::SystemTime>,
     pub odometry_original_sizes: Vec<usize>,
-    pub odometry_latencies: Vec<std::time::Duration>,
+    pub odometry_latencies: Vec<i64>,
 }

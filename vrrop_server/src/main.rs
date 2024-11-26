@@ -81,7 +81,7 @@ fn save_stats(stats: Stats, dir: &Path) -> Result<()> {
     let image_stats_path = dir.join("images.csv");
     let mut image_stats_dest = std::fs::File::create(image_stats_path)?;
     writeln!(image_stats_dest, "stamp,size,latency")?;
-    for ((stamp, size), latency) in stats
+    for ((stamp, size), &latency) in stats
         .images_stamps
         .iter()
         .zip(stats.images_original_sizes.iter())
@@ -92,13 +92,13 @@ fn save_stats(stats: Stats, dir: &Path) -> Result<()> {
             "{},{},{}",
             stamp.duration_since(UNIX_EPOCH).unwrap().as_secs_f64(),
             size,
-            latency.as_secs_f64()
+            latency as f64 / 1e9
         )?;
     }
     let odometry_stats_path = dir.join("odometry.csv");
     let mut odometry_stats_dest = std::fs::File::create(odometry_stats_path)?;
     writeln!(odometry_stats_dest, "stamp,size,latency")?;
-    for ((stamp, size), latency) in stats
+    for ((stamp, size), &latency) in stats
         .odometry_stamps
         .iter()
         .zip(stats.odometry_original_sizes.iter())
@@ -109,7 +109,7 @@ fn save_stats(stats: Stats, dir: &Path) -> Result<()> {
             "{},{},{}",
             stamp.duration_since(UNIX_EPOCH).unwrap().as_secs_f64(),
             size,
-            latency.as_secs_f64()
+            latency as f64 / 1e9
         )?;
     }
     Ok(())

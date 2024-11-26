@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     panic,
     sync::Arc,
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime},
 };
 
 use anyhow::{anyhow, Result};
@@ -20,7 +20,7 @@ use tokio::{
     time::sleep,
 };
 use tokio_tungstenite::WebSocketStream;
-use vrrop_common::{CameraIntrinsics, Command};
+use vrrop_common::{CameraIntrinsics, Command, PongMessage, UdpClientMessage, UdpServerMessage};
 
 use crate::slam_core::{ColorImage, DepthImage};
 
@@ -131,8 +131,20 @@ async fn serve_udp(
         let mut buf = [0u8; 2048];
         select! {
             res = udp_sock.recv_from(&mut buf) => {
-                let (_n, src) = res?;
+                let (n, src) = res?;
                 clients.insert(src, Instant::now());
+                let data = &buf[..n];
+                let msg: UdpClientMessage = bincode::deserialize(data)?;
+                match msg {
+                    UdpClientMessage::Ping(ping) => {
+                        let pong = UdpServerMessage::Pong(PongMessage {
+                            client_time: ping.client_time,
+                            server_time: SystemTime::now(),
+                        });
+                        let encoded_msg = bincode::serialize(&pong)?;
+                        udp_sock.send_to(&encoded_msg, src).await?;
+                    }
+                }
             }
             res = odometry_receiver.recv() => {
                 match res {
@@ -147,7 +159,7 @@ async fn serve_udp(
                                 }
                             })
                             .collect();
-                        let encoded_msg = bincode::serialize(&encode_odometry_message(&msg))?;
+                        let encoded_msg = bincode::serialize(&UdpServerMessage::Odometry(encode_odometry_message(&msg)))?;
                         for src in clients.keys() {
                             udp_sock.send_to(&encoded_msg, src).await?;
                         }

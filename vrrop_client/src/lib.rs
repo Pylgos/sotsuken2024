@@ -3,12 +3,15 @@ use futures::SinkExt;
 use futures::{never::Never, StreamExt, TryStreamExt};
 use image::{ImageBuffer, Luma, Rgb};
 use nalgebra::{Quaternion, UnitQuaternion, Vector3, Vector4};
+use std::sync::atomic::AtomicI64;
+use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::net::{lookup_host, ToSocketAddrs};
 use tokio::sync::mpsc;
 use tokio::{net::UdpSocket, select, task::JoinHandle, time::sleep};
 use tokio_util::sync::CancellationToken;
-use vrrop_common::{CameraIntrinsics, Command};
+use vrrop_common::{CameraIntrinsics, Command, Stats};
 
 mod pointcloud;
 pub use pointcloud::GridIndex;
@@ -57,6 +60,14 @@ pub struct Client {
     connect_loop: JoinHandle<()>,
     cancel: CancellationToken,
     command_sender: mpsc::UnboundedSender<Command>,
+    stats: Arc<Mutex<StatsState>>,
+    server_time_offset_ns: Arc<AtomicI64>,
+}
+
+#[derive(Debug, Clone, Default)]
+struct StatsState {
+    stats: Stats,
+    recording: bool,
 }
 
 async fn decode_images_message(
@@ -92,10 +103,79 @@ fn decode_odometry_message(
     }
 }
 
-async fn handle_images_message(data: &[u8], callbacks: &Callbacks) -> Result<()> {
+async fn handle_images_message(
+    data: &[u8],
+    callbacks: &Callbacks,
+    stats: &Mutex<StatsState>,
+    server_time_offset_ns: &Arc<AtomicI64>,
+) -> Result<()> {
     let compressed = bincode::deserialize::<vrrop_common::ImagesMessage>(data)?;
     let msg = decode_images_message(compressed, data.len()).await?;
+    {
+        let mut stats = stats.lock().unwrap();
+        if stats.recording {
+            let stamp_ns = msg.odometry.stamp.duration_since(UNIX_EPOCH)?.as_nanos();
+            let server_time_offset_ns =
+                server_time_offset_ns.load(std::sync::atomic::Ordering::Relaxed);
+            let now_server_time_ns = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos()
+                as i64
+                + server_time_offset_ns;
+            let latency_ns = now_server_time_ns - stamp_ns as i64;
+            stats.stats.images_stamps.push(msg.odometry.stamp);
+            stats.stats.images_original_sizes.push(data.len());
+            stats.stats.images_latencies.push(latency_ns);
+        }
+    }
     (callbacks.on_images)(msg);
+    Ok(())
+}
+
+async fn handle_udp_message(
+    data: &[u8],
+    callbacks: &Callbacks,
+    stats: &Mutex<StatsState>,
+    server_time_offset_ns: &Arc<AtomicI64>,
+) -> Result<()> {
+    let raw = bincode::deserialize::<vrrop_common::UdpServerMessage>(data)?;
+    match raw {
+        vrrop_common::UdpServerMessage::Pong(pong) => {
+            let Ok(rtt) = pong.client_time.elapsed() else {
+                return Ok(());
+            };
+            let server_time_ns = pong
+                .server_time
+                .duration_since(SystemTime::UNIX_EPOCH)?
+                .as_nanos() as i64;
+            let now_ns = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)?
+                .as_nanos() as i64;
+            let rtt_ns = rtt.as_nanos() as i64;
+            let new_server_time_offset_ns = server_time_ns - (now_ns - rtt_ns / 2);
+            server_time_offset_ns.store(
+                new_server_time_offset_ns,
+                std::sync::atomic::Ordering::Relaxed,
+            );
+        }
+        vrrop_common::UdpServerMessage::Odometry(odom) => {
+            let msg = decode_odometry_message(odom, data.len());
+            {
+                let mut stats = stats.lock().unwrap();
+                if stats.recording {
+                    let stamp_ns = msg.stamp.duration_since(UNIX_EPOCH)?.as_nanos();
+                    let server_time_offset_ns =
+                        server_time_offset_ns.load(std::sync::atomic::Ordering::Relaxed);
+                    let now_server_time_ns =
+                        SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos() as i64
+                            + server_time_offset_ns;
+                    let latency_ns = now_server_time_ns - stamp_ns as i64;
+                    stats.stats.odometry_stamps.push(msg.stamp);
+                    stats.stats.odometry_original_sizes.push(data.len());
+                    stats.stats.odometry_latencies.push(latency_ns);
+                }
+            }
+            (callbacks.on_odometry)(msg);
+        }
+    }
     Ok(())
 }
 
@@ -104,6 +184,8 @@ async fn connect(
     callbacks: Arc<Callbacks>,
     cancel: CancellationToken,
     command_receiver: &mut mpsc::UnboundedReceiver<Command>,
+    stats: Arc<Mutex<StatsState>>,
+    server_time_offset_ns: Arc<AtomicI64>,
 ) -> Result<()> {
     let udp_sock = Arc::new(UdpSocket::bind("0.0.0.0:0").await?);
     udp_sock.connect(target).await?;
@@ -115,11 +197,19 @@ async fn connect(
 
     let mut ws_read_loop = tokio::spawn({
         let callbacks = Arc::clone(&callbacks);
+        let stats = Arc::clone(&stats);
+        let server_time_offset_ns = Arc::clone(&server_time_offset_ns);
         async move {
             ws_reader
                 .map_err(|e| anyhow!(e))
                 .and_then(|msg| async {
-                    handle_images_message(&msg.into_data(), &callbacks).await?;
+                    handle_images_message(
+                        &msg.into_data(),
+                        &callbacks,
+                        &stats,
+                        &server_time_offset_ns,
+                    )
+                    .await?;
                     anyhow::Ok(())
                 })
                 .try_for_each(|_| async { Ok(()) })
@@ -131,12 +221,13 @@ async fn connect(
     let mut udp_recv_loop: JoinHandle<Result<Never>> = tokio::spawn({
         let udp_sock = Arc::clone(&udp_sock);
         let callbacks = Arc::clone(&callbacks);
+        let stats = Arc::clone(&stats);
+        let server_time_offset_ns = Arc::clone(&server_time_offset_ns);
         async move {
             loop {
                 let mut data = [0u8; 1024];
                 let n = udp_sock.recv(&mut data).await?;
-                let msg = decode_odometry_message(bincode::deserialize(&data[..n]).unwrap(), n);
-                (callbacks.on_odometry)(msg);
+                handle_udp_message(&data[..n], &callbacks, &stats, &server_time_offset_ns).await?;
             }
         }
     });
@@ -146,7 +237,12 @@ async fn connect(
         let udp_sock = Arc::clone(&udp_sock);
         async move {
             loop {
-                udp_sock.send(&[]).await?;
+                let msg = bincode::serialize(&vrrop_common::UdpClientMessage::Ping(
+                    vrrop_common::PingMessage {
+                        client_time: std::time::SystemTime::now(),
+                    },
+                ))?;
+                udp_sock.send(&msg).await?;
                 sleep(Duration::from_millis(100)).await;
             }
         }
@@ -211,9 +307,13 @@ impl Client {
         let callbacks = Arc::new(callbacks);
         let cancel = CancellationToken::new();
         let (command_sender, mut command_receiver) = mpsc::unbounded_channel();
+        let stats = Arc::new(Mutex::new(StatsState::default()));
+        let server_time_offset_ns = Arc::new(AtomicI64::new(0));
 
         let connect_loop = tokio::spawn({
             let cancel = cancel.clone();
+            let stats = Arc::clone(&stats);
+            let server_time_offset_ns = Arc::clone(&server_time_offset_ns);
             async move {
                 loop {
                     match connect(
@@ -221,6 +321,8 @@ impl Client {
                         Arc::clone(&callbacks),
                         cancel.clone(),
                         &mut command_receiver,
+                        Arc::clone(&stats.clone()),
+                        Arc::clone(&server_time_offset_ns),
                     )
                     .await
                     {
@@ -238,11 +340,31 @@ impl Client {
             connect_loop,
             cancel,
             command_sender,
+            stats,
+            server_time_offset_ns,
         })
     }
 
     pub fn send_command(&self, command: Command) {
         self.command_sender.send(command).unwrap();
+    }
+
+    pub fn start_recording(&self) {
+        let mut stats = self.stats.lock().unwrap();
+        stats.recording = true;
+    }
+
+    pub fn is_recording(&self) -> bool {
+        self.stats.lock().unwrap().recording
+    }
+
+    pub fn end_recording(&self) {
+        let mut stats = self.stats.lock().unwrap();
+        stats.recording = false;
+        self.command_sender
+            .send(Command::SaveStats(stats.stats.clone()))
+            .unwrap();
+        stats.stats = Default::default();
     }
 
     pub async fn shutdown(self) {
