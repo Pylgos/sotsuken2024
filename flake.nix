@@ -64,6 +64,10 @@
             pkgs.xorg.libXi
             pkgs.xorg.libXrandr
             selfPackages.rtabmap
+
+            pkgs.python3
+            pkgs.python3Packages.matplotlib
+            pkgs.python3Packages.pandas
           ];
           LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
           LIBCLANG_PATH = "${pkgs.llvmPackages.clang-unwrapped.lib}/lib";
