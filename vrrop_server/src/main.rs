@@ -32,7 +32,7 @@ struct ServeArgs {
 #[derive(clap::Parser)]
 struct RecordArgs {
     #[clap(long, short, default_value = "bag")]
-    dest_dir: PathBuf,
+    bag_dir: PathBuf,
 }
 
 #[derive(clap::Parser)]
@@ -164,7 +164,7 @@ async fn main() -> Result<()> {
     let interval = Duration::from_millis(args.image_interval);
     match args.subcommand {
         Subcommand::Serve(args) => serve(interval, args.port).await?,
-        Subcommand::Record(args) => record(interval, &args.dest_dir).await?,
+        Subcommand::Record(args) => record(interval, &args.bag_dir).await?,
         Subcommand::Replay(args) => replay(args.port, &args.bag_dir, args.loop_).await?,
     }
     Ok(())
@@ -225,8 +225,8 @@ async fn serve(image_interval: Duration, port: u16) -> Result<()> {
     Ok(())
 }
 
-async fn record(image_interval: Duration, dest_dir: &Path) -> Result<()> {
-    let mut recorder = Recorder::new(dest_dir)?;
+async fn record(image_interval: Duration, bag_dir: &Path) -> Result<()> {
+    let mut recorder = Recorder::new(bag_dir)?;
     let (image_sender, mut image_receiver) = broadcast::channel(1);
     let (odometry_sender, mut odometry_receiver) = broadcast::channel(1);
     let _slam_core = init_slam_core(image_sender, odometry_sender, image_interval)?;
