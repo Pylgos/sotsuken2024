@@ -42,15 +42,17 @@ pub struct ImagesMessage {
 
 #[derive(Debug)]
 pub struct Server {
-    image_sender: broadcast::Sender<ImagesMessage>,
-    odometry_sender: broadcast::Sender<OdometryMessage>,
+    image_sender: broadcast::Sender<vrrop_common::ImagesMessage>,
+    odometry_sender: broadcast::Sender<vrrop_common::OdometryMessage>,
+    _dummy_image_receiver: broadcast::Receiver<vrrop_common::ImagesMessage>,
+    _dummy_odometry_receiver: broadcast::Receiver<vrrop_common::OdometryMessage>,
     serve_websocket_join_handle: JoinHandle<()>,
     serve_udp_join_handle: JoinHandle<()>,
 }
 
 async fn serve_websocket(
     port: u16,
-    image_receiver: broadcast::Sender<ImagesMessage>,
+    image_receiver: broadcast::Sender<vrrop_common::ImagesMessage>,
     callbacks: Arc<Callbacks>,
 ) -> Result<()> {
     let listener = TcpListener::bind(("0.0.0.0", port)).await?;
@@ -90,7 +92,7 @@ async fn serve_websocket(
 
 async fn handle_websocket_connection(
     websocket: WebSocketStream<TcpStream>,
-    mut image_receiver: broadcast::Receiver<ImagesMessage>,
+    mut image_receiver: broadcast::Receiver<vrrop_common::ImagesMessage>,
     callbacks: Arc<Callbacks>,
 ) -> Result<()> {
     let (mut writer, mut reader) = websocket.split();
@@ -99,8 +101,7 @@ async fn handle_websocket_connection(
             res = image_receiver.recv() => {
                 match res {
                     Ok(images) => {
-                let msg = encode_images_msssage(&images).await?;
-                let encoded_msg = bincode::serialize(&msg)?;
+                let encoded_msg = bincode::serialize(&images)?;
                 writer.send(tokio_tungstenite::tungstenite::Message::binary(encoded_msg)).await?;
                     }
                     Err(broadcast::error::RecvError::Closed) => return Ok(()),
@@ -123,7 +124,7 @@ async fn handle_websocket_connection(
 
 async fn serve_udp(
     port: u16,
-    mut odometry_receiver: broadcast::Receiver<OdometryMessage>,
+    mut odometry_receiver: broadcast::Receiver<vrrop_common::OdometryMessage>,
 ) -> Result<()> {
     let udp_sock = Arc::new(UdpSocket::bind(("0.0.0.0", port)).await?);
     let mut clients = HashMap::new();
@@ -159,7 +160,7 @@ async fn serve_udp(
                                 }
                             })
                             .collect();
-                        let encoded_msg = bincode::serialize(&UdpServerMessage::Odometry(encode_odometry_message(&msg)))?;
+                        let encoded_msg = bincode::serialize(&UdpServerMessage::Odometry(msg))?;
                         for src in clients.keys() {
                             udp_sock.send_to(&encoded_msg, src).await?;
                         }
@@ -212,6 +213,8 @@ impl Server {
         Ok(Self {
             image_sender,
             odometry_sender,
+            _dummy_image_receiver: _image_receiver,
+            _dummy_odometry_receiver: _odometry_receiver,
             serve_websocket_join_handle,
             serve_udp_join_handle,
         })
@@ -239,16 +242,16 @@ impl Server {
         Ok(())
     }
 
-    pub fn odometry_sender(&self) -> broadcast::Sender<OdometryMessage> {
+    pub fn odometry_sender(&self) -> broadcast::Sender<vrrop_common::OdometryMessage> {
         self.odometry_sender.clone()
     }
 
-    pub fn image_sender(&self) -> broadcast::Sender<ImagesMessage> {
+    pub fn image_sender(&self) -> broadcast::Sender<vrrop_common::ImagesMessage> {
         self.image_sender.clone()
     }
 }
 
-fn encode_odometry_message(msg: &OdometryMessage) -> vrrop_common::OdometryMessage {
+pub fn encode_odometry_message(msg: &OdometryMessage) -> vrrop_common::OdometryMessage {
     vrrop_common::OdometryMessage {
         stamp: msg.stamp,
         translation: msg.translation.into(),
@@ -256,7 +259,7 @@ fn encode_odometry_message(msg: &OdometryMessage) -> vrrop_common::OdometryMessa
     }
 }
 
-async fn encode_images_msssage(msg: &ImagesMessage) -> Result<vrrop_common::ImagesMessage> {
+pub async fn encode_images_message(msg: &ImagesMessage) -> Result<vrrop_common::ImagesMessage> {
     let (color, depth) = tokio::join!(
         encode_color(msg.color.clone()),
         encode_depth(msg.depth.clone())

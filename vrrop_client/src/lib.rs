@@ -70,7 +70,7 @@ struct StatsState {
     recording: bool,
 }
 
-async fn decode_images_message(
+pub async fn decode_images_message(
     compressed: vrrop_common::ImagesMessage,
     original_size: usize,
 ) -> Result<ImagesMessage> {
@@ -89,7 +89,7 @@ async fn decode_images_message(
     })
 }
 
-fn decode_odometry_message(
+pub fn decode_odometry_message(
     raw: vrrop_common::OdometryMessage,
     original_size: usize,
 ) -> OdometryMessage {

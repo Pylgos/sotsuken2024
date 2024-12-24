@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub mod bag;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UdpClientMessage {
     Ping(PingMessage),
