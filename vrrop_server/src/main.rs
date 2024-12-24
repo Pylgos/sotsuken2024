@@ -41,6 +41,8 @@ struct ReplayArgs {
     bag_dir: PathBuf,
     #[clap(long, short, default_value_t = 6677)]
     port: u16,
+    #[clap(long = "loop", short, default_value_t = false)]
+    loop_: bool,
 }
 
 #[derive(clap::Subcommand)]
@@ -163,7 +165,7 @@ async fn main() -> Result<()> {
     match args.subcommand {
         Subcommand::Serve(args) => serve(interval, args.port).await?,
         Subcommand::Record(args) => record(interval, &args.dest_dir).await?,
-        Subcommand::Replay(args) => replay(args.port, &args.bag_dir).await?,
+        Subcommand::Replay(args) => replay(args.port, &args.bag_dir, args.loop_).await?,
     }
     Ok(())
 }
@@ -248,8 +250,7 @@ async fn record(image_interval: Duration, dest_dir: &Path) -> Result<()> {
     Ok(())
 }
 
-async fn replay(port: u16, bag_dir: &Path) -> Result<()> {
-    let mut player = Player::new(bag_dir)?;
+async fn replay(port: u16, bag_dir: &Path, loop_: bool) -> Result<()> {
     let server = Server::new(
         port,
         Callbacks {
@@ -257,31 +258,36 @@ async fn replay(port: u16, bag_dir: &Path) -> Result<()> {
         },
     )
     .await?;
-    tokio::time::sleep(Duration::from_secs(3)).await;
     let image_sender = server.image_sender();
     let odometry_sender = server.odometry_sender();
     let ctrl_c = tokio::signal::ctrl_c();
     pin_mut!(ctrl_c);
-    loop {
-        let Some(next_time) = player.poll_next_event_time() else {
-            break;
-        };
-        select! {
-            _ = sleep_until(tokio::time::Instant::from_std(next_time)) => {}
-            _ = &mut ctrl_c => {
+    'outer: loop {
+        let mut player = Player::new(bag_dir)?;
+        loop {
+            let Some(next_time) = player.poll_next_event_time() else {
                 break;
+            };
+            select! {
+                _ = sleep_until(tokio::time::Instant::from_std(next_time)) => {}
+                _ = &mut ctrl_c => {
+                    break 'outer;
+                }
+            }
+            let Some(event) = player.next_event()? else {
+                break;
+            };
+            match event {
+                bag::Event::Odometry(msg) => {
+                    odometry_sender.send(msg)?;
+                }
+                bag::Event::Images(msg) => {
+                    image_sender.send(msg)?;
+                }
             }
         }
-        let Some(event) = player.next_event()? else {
+        if !loop_ {
             break;
-        };
-        match event {
-            bag::Event::Odometry(msg) => {
-                odometry_sender.send(msg)?;
-            }
-            bag::Event::Images(msg) => {
-                image_sender.send(msg)?;
-            }
         }
     }
     Ok(())
