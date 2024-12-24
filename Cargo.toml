@@ -10,6 +10,7 @@ members = [
   "vrrop_control_server",
   "vrrop_control_client",
   "vrrop_control_client_desktop",
+  "vrrop_bench",
 ]
 
 [workspace.dependencies]

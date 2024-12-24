@@ -1,0 +1,22 @@
+[package]
+name = "vrrop_bench"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+vrrop_client.workspace = true
+vrrop_common.workspace = true
+
+anyhow.workspace = true
+bincode.workspace = true
+futures.workspace = true
+fxhash.workspace = true
+image.workspace = true
+nalgebra.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tokio-tungstenite.workspace = true
+rayon = "1.10.0"
+clap = { version = "4.5.8", features = ["derive"] }
