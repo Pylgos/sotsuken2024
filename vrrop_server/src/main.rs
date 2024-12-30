@@ -254,7 +254,12 @@ async fn replay(port: u16, bag_dir: &Path, loop_: bool) -> Result<()> {
     let server = Server::new(
         port,
         Callbacks {
-            on_command: Box::new(|_command| {}),
+            on_command: Box::new(|command| {
+                if let Command::SaveStats(stats) = command {
+                    println!("Saving statistics...");
+                    let _ = save_stats(stats, Path::new("stats"));
+                }
+            }),
         },
     )
     .await?;
