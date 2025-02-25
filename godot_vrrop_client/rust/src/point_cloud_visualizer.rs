@@ -125,15 +125,15 @@ fn create_debug_mesh(
 #[godot_api]
 impl PointCloudVisualizer {
     #[func]
-    fn add_image(&mut self, image: Gd<ImagesMessage>) {
+    fn add_image(&mut self, image: Gd<ImagesMessage>) -> f64 {
         let Some(material) = self.material.clone() else {
-            return;
+            return 0.0;
         };
         let image = image.bind();
         let Some(image) = image.inner.as_ref() else {
-            return;
+            return 0.0;
         };
-        let modified_grids = self.cloud.merge_images_msg(image);
+        let (modified_grids, time) = self.cloud.merge_images_msg(image);
         for grid_index in modified_grids.iter().copied() {
             if let Some(mesh) = create_mesh(grid_index, &self.cloud, material.clone()) {
                 if let Some(mesh_inst) = self.meshes.get_mut(&grid_index) {
@@ -161,6 +161,7 @@ impl PointCloudVisualizer {
                 }
             }
         }
+        time.as_secs_f64()
     }
 
     #[func]

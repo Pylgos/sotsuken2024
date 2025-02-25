@@ -6,6 +6,10 @@
       url = "github:Pylgos/rtabmap/cpp20";
       flake = false;
     };
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -14,6 +18,7 @@
       flake-utils,
       nixpkgs,
       rtabmap-src,
+      fenix,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -44,10 +49,21 @@
         mkShell = pkgs.mkShell.override (_: {
           stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;
         });
+        fenixPkgs = fenix.packages.${system};
+        rustToolchain = fenixPkgs.combine [
+          fenixPkgs.rust-analyzer
+          fenixPkgs.stable.cargo
+          fenixPkgs.stable.rustc
+          fenixPkgs.targets.aarch64-linux-android.stable.rust-std
+        ];
       in
       {
         devShells.default = mkShell rec {
           buildInputs = [
+            rustToolchain
+            # pkgs.cargo
+            # pkgs.rust-analyzer
+            # pkgs.rustc
             pkgs.cmake
             pkgs.godot_4
             pkgs.jdk17

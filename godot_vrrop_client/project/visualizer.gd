@@ -60,7 +60,8 @@ func start(client: Client) -> void:
 			WorkerThreadPool.add_task(
 				func():
 					_visualizer_lock.lock()
-					_visualizer.add_image(image)
+					var time := _visualizer.add_image(image)
+					print(time)
 					_visualizer_lock.unlock()
 			)
 	)

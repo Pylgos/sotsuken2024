@@ -105,7 +105,7 @@ impl PointCloud {
         }
     }
 
-    pub fn merge_images_msg(&mut self, image_msg: &ImagesMessage) -> FxHashSet<GridIndex> {
+    pub fn merge_images_msg(&mut self, image_msg: &ImagesMessage) -> (FxHashSet<GridIndex>, std::time::Duration) {
         let start = std::time::Instant::now();
         let prev_point_count = self.grid_map.all_points().count();
 
@@ -192,7 +192,7 @@ impl PointCloud {
             point_count as i64 - prev_point_count as i64
         );
         println!("grid count: {}", self.grid_map().grids().len());
-        modified_grids
+        (modified_grids, start.elapsed())
     }
 
     pub fn grid_map(&self) -> &SpacialGridMap {
