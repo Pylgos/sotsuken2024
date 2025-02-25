@@ -54,11 +54,11 @@ cargo build --release -p godot_vrrop_client --target aarch64-linux-android
 - APKのビルド  
 godot_vrrop_client/projectディレクトリをGodotエディタで開き，[公式ドキュメント](https://docs.godotengine.org/ja/4.3/tutorials/export/exporting_for_android.html)に従ってエクスポートしてください．
 
-## サーバへのの接続
+## サーバへの接続
 
 - サーバのIPアドレスを確認する．
 - クライアントアプリを起動する．
-- 左手に設定パネルが表示されるので，「Server Address」欄を右手のトリガーで選択し，ポップアップするキーボードでサーバのIPアドレスを入力する．
+- 左コントローラに設定パネルが表示されるので，「Server Address」欄を右コントローラのトリガーで選択し，ポップアップするキーボードでサーバのIPアドレスを入力する．
 
 ## 操作方法
 
