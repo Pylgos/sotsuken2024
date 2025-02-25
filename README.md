@@ -51,7 +51,7 @@ cargo build --release -p godot_vrrop_client
 cargo build --release -p godot_vrrop_client --target aarch64-linux-android
 ```
 
-- APKのビルド
+- APKのビルド  
 godot_vrrop_client/projectディレクトリをGodotエディタで開き，[公式ドキュメント](https://docs.godotengine.org/ja/4.3/tutorials/export/exporting_for_android.html)に従ってエクスポートしてください．
 
 ## サーバへのの接続
